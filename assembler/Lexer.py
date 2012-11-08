@@ -4,7 +4,8 @@ import re
 #LEX Example: http://www.dabeaz.com/ply/ply.html#ply_nn4
 
 class Lexer(object):
-	def __init__(self):
+	def __init__(self, error_callback):
+		self._error_callback = error_callback
 		self.lexer = lex.lex(object=self)
 
 	def input(self, text):
@@ -12,6 +13,9 @@ class Lexer(object):
 
 	def token(self):
 		return self.lexer.token()
+
+	def reset(self):
+		self.lexer.lineno = 1
 
 	tokens = (
 		'ID', 'DIRECTIVE',
@@ -69,5 +73,5 @@ class Lexer(object):
 		pass
 
 	def t_error(self, t):
-		print "Illegal character '%s' at line %s" % (t.value[0], t.lineno)
+		self._error_callback("Illegal character '%s' at line %s" % (t.value[0], t.lineno))
 		t.lexer.skip(1)

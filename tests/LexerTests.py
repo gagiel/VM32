@@ -1,7 +1,7 @@
 import unittest, sys
 sys.path.insert(0, '.')
 
-from assembler import Lexer
+from assembler.Lexer import Lexer
 from ply.lex import LexToken
 
 lexTest = """.segment text
@@ -23,7 +23,7 @@ main:
 
 class MemoryTest(unittest.TestCase):
 	def setUp(self):
-		self.lexer = Lexer.Lexer()
+		self.lexer = Lexer(error_callback=self.fail)
 
 	def assert_token(self, inputText, expectedToken):
 		self.lexer.input(inputText)

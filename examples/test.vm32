@@ -1,0 +1,16 @@
+.SEGMENT code
+.GLOBAL start
+
+start:
+	JMP start
+	JMP 1
+	#JMP es:0[label]
+
+#	MOV es:0(somelabel), 1
+#	MOV abc, 1
+
+#.segment data
+#.word 1,2,3,4
+#.string "hurr, durr!"
+#.alloc 20
+#.word 1337
