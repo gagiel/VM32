@@ -170,7 +170,8 @@ class Assembler(object):
 				#allocate n words of space and initialize them with zeros
 				elif line.name == '.alloc':
 					num = line.args[0].val
-					seg_data[addr.segment].extend([0] * num)
+					for i in range(num):
+						seg_data[addr.segment].extend([struct.pack("<I", 0)])
 
 				#allocate n words of space and initialize them with the values in the arguments
 				elif line.name == '.word':
