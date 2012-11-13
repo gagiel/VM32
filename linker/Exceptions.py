@@ -1,0 +1,1 @@
+class LinkerError(Exception): pass

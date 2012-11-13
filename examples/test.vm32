@@ -1,7 +1,9 @@
 .SEGMENT code
 .GLOBAL start
+.GLOBAL startup
 .DEFINE foobar, 2
 
+startup:
 start:
 	#jmp ds:0[start]
 	JMP start

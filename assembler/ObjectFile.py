@@ -6,6 +6,7 @@ RelocEntry = namedtuple('RelocEntry', 'reloc_segment addr')
 
 class ObjectFile(object):
 	def __init__(self):
+		self.name = None
 		self.seg_data = {}
 		self.export_table = []
 		self.import_table = []
