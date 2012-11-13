@@ -108,9 +108,15 @@ class Linker(object):
 		segment_ptr = {}
 		ptr = offset
 
+		#put vectors at the beginning for now until we have a linker script
+		if "vectors" in segment_size:
+			segment_ptr["vectors"] = ptr
+			ptr += segment_size["vectors"]
+
 		for segment in sorted(segment_size):
-			segment_ptr[segment] = ptr
-			ptr += segment_size[segment]
+			if segment not in ("vectors"):
+				segment_ptr[segment] = ptr
+				ptr += segment_size[segment]
 
 		total_size = ptr - offset
 

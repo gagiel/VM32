@@ -1,4 +1,5 @@
 .SEGMENT vectors
+.privLvl 0
 .GLOBAL InterruptVectors
 
 InterruptVectors:

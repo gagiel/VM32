@@ -1,4 +1,5 @@
 .SEGMENT code
+.privLvl 0
 .GLOBAL startup
 
 startup:

@@ -49,10 +49,16 @@ def main(argc, argv):
 
 	except IOError, e:
 		logger.error(e)
+		sys.exit(-1)
 	except ParseError, e:
 		logger.error(e)
+		sys.exit(-1)
 	except AssemblyError, e:
 		logger.error(e)
+		sys.exit(-1)
+	except Exception, e:
+		logger.error(e)
+		sys.exit(-1)
 
 
 if __name__ == '__main__':

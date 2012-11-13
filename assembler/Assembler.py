@@ -111,6 +111,7 @@ class Assembler(object):
 		self.logger.debug("Assembler Pass 2: Assembling code")
 
 		defines = {}
+		privilegeLevel = 0
 
 		seg_data = defaultdict(list)
 
@@ -125,7 +126,7 @@ class Assembler(object):
 
 				try:
 					#assemble the instruction and generate import and relocation information
-					instruction = assembleInstruction(line.name, line.args, addr, symtab, defines)
+					instruction = assembleInstruction(line.name, line.args, addr, symtab, defines, privilegeLevel)
 					
 					#get the offset where this instruction is placed at
 					offset = len(seg_data[addr.segment])
@@ -154,6 +155,10 @@ class Assembler(object):
 				if line.name == '.define':
 					self._validate_args(line, [Id, Number])
 					defines[line.args[0].id] = line.args[1].val
+
+				elif line.name == '.privlvl':
+					self._validate_args(line, [Number])
+					privilegeLevel = line.args[0].val
 
 				#define a symbol as exported
 				elif line.name == '.global':

@@ -213,7 +213,7 @@ def doesInstructionExist(instruction):
 def getInstructionLength(instruction):
 	return 1 + _INSTR[instruction]['nargs']
 
-def assembleInstruction(name, args, addr, symtab, defines):
+def assembleInstruction(name, args, addr, symtab, defines, privilegeLevel):
 	""" Assembles an instruction
 
 		name:
@@ -230,6 +230,9 @@ def assembleInstruction(name, args, addr, symtab, defines):
 
 		defines:
 			Defined constants
+
+		privilegeLevel:
+			The privilege level of this instruction
 	"""
 	if not doesInstructionExist(name):
 		raise InstructionError("Unknown instruction %s" % name)
@@ -242,8 +245,6 @@ def assembleInstruction(name, args, addr, symtab, defines):
 	for i, arg in enumerate(args):
 		if not type(arg) in instr['paramtypes'][i]:
 			raise InstructionError("Unexpected argument for instruction %s at position %d of type %s" % (name, i+1, arg.__class__.__name__))
- 
-	privilegeLevel = 0
 	
 	operandValues = []
 	operandTypes = []

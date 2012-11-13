@@ -49,6 +49,10 @@ def main(argc, argv):
 
 	except IOError, e:
 		logger.error(e)
+		sys.exit(-1)
+	except Exception, e:
+		logger.error(e)
+		sys.exit(-1)
 
 if __name__ == '__main__':
 	main(len(sys.argv), sys.argv)
