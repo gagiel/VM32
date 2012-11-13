@@ -1,0 +1,57 @@
+.SEGMENT vectors
+.GLOBAL InterruptVectors
+
+InterruptVectors:
+
+#0x00
+vec_reset:
+	JMP startup
+
+#0x01
+vec_segmentViolation:
+	JMP vec_segmentViolation
+
+#0x02
+vec_invalidOpcode:
+	JMP vec_invalidOpcode
+
+#0x03
+vec_divisionByZero:
+	JMP vec_divisionByZero
+
+#0x04
+vec_hypervisorTrap:
+	JMP vec_hypervisorTrap
+
+#0x05
+vec_timerInterrupt:
+	JMP vec_timerInterrupt
+
+#0x06-0x20
+vec_softwareStart:
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+hang:
+	JMP hang

@@ -3,6 +3,7 @@
 import sys
 import argparse
 import logging
+import pickle
 
 from assembler.Assembler import Assembler
 from assembler.Exceptions import ParseError
@@ -39,6 +40,9 @@ def main(argc, argv):
 
 		#assemble the file
 		assembled = asm.assemble(inputFile.read())
+
+		#serialize the assembled file and save it
+		pickle.dump(assembled, outputFile)
 
 		#cleanup
 		outputFile.close()

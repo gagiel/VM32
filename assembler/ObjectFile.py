@@ -1,3 +1,9 @@
+from collections import namedtuple
+
+ExportEntry = namedtuple('ExportEntry', 'export_symbol addr')
+ImportEntry = namedtuple('ImportEntry', 'import_symbol addr')
+RelocEntry = namedtuple('RelocEntry', 'reloc_segment addr')
+
 class ObjectFile(object):
 	def __init__(self):
 		self.seg_data = {}

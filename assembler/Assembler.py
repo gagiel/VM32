@@ -1,4 +1,5 @@
 import logging
+import struct
 from collections import defaultdict
 
 from Exceptions import AssemblyError, InstructionError
@@ -6,7 +7,7 @@ from CommonTypes import SegAddr
 from Parser import Number, Id, String, MemRef, DoubleMemRef, Instruction, Directive, LabelDef
 
 from .Parser import Parser
-from .ObjectFile import ObjectFile
+from .ObjectFile import ObjectFile, ExportEntry, ImportEntry, RelocEntry
 
 from Instructions import doesInstructionExist, getInstructionLength, assembleInstruction
 
@@ -79,16 +80,23 @@ class Assembler(object):
 				if cur_seg and line.name != '.segment':
 					addr_imf.append((saddr, line))
 
+				#create a new segment if it is unknown at this point
 				if line.name == '.segment':
 					self._validate_args(line, [Id])
 					cur_seg = line.args[0].id
 					if not cur_seg in seg_addr:
 						seg_addr[cur_seg] = 0
+
+				#reserve space in the current segment for initialized data
 				elif line.name == '.word':
-					seg_addr[cur_seg] += len(line.args) * 4
+					seg_addr[cur_seg] += len(line.args)
+
+				#reserve space in the current segment for zero-initialized data
 				elif line.name == '.alloc':
 					self._validate_args(line, [Number])
 					seg_addr[cur_seg] = seg_addr[cur_seg] + int(line.args[0].val)
+
+				#reserve space in the current segment for a string
 				elif line.name == '.string':
 					self._validate_args(line, [String])
 					seg_addr[cur_seg] = seg_addr[cur_seg] + len(line.args[0].val) + 1
@@ -111,39 +119,91 @@ class Assembler(object):
 		reloc_table = []
 
 		for addr, line in addr_imf:
+			#assemble an instruction
 			if isinstance(line, Instruction):
 				assert len(seg_data[addr.segment]) == addr.offset
 
 				try:
-					instructions = assembleInstruction(line.name, line.args, addr, symtab, defines)
+					#assemble the instruction and generate import and relocation information
+					instruction = assembleInstruction(line.name, line.args, addr, symtab, defines)
+					
+					#get the offset where this instruction is placed at
+					offset = len(seg_data[addr.segment])
+					
+					#add reported imports to import table
+					for i, importedSymbol in enumerate(instruction.import_req):
+						if importedSymbol != None:
+							import_table.append(ImportEntry(
+								import_symbol=importedSymbol,
+								addr=SegAddr(addr.segment, offset+1+i)))
+
+					#add reported relocations to relocation table
+					for i, segment in enumerate(instruction.reloc_req):
+						if segment != None:
+							reloc_table.append(RelocEntry(
+								reloc_segment=segment,
+								addr=SegAddr(addr.segment, offset+1+i)))
+
+					#add instruction to current segment
+					seg_data[addr.segment].extend(list(instruction.op))
 				except InstructionError,e:
 					self._assembly_error(e, line.lineno)
 
-				for instr in instructions:
-					offset = len(seg_data[addr.segment])
-
-					#if instr.import_req:
-					#	type, symbol = instr.import_req
-					#	import_table.append(ImportEntry(
-					#		import_symbol=symbol,
-					#		type=type,
-					#		addr=SegAddr(addr.segment, offset)))
-
-					#if instr.reloc_req:
-					#	type, sefment = instr.reloc_req
-					#	reloc_table.append(RelocEntry(
-					#		reloc_segment=segment,
-					#		type=type,
-					#		addr=SegAddr(addr.segment, offset)))
-
-					seg_data[addr.segment].extend(list(instr.op))
-			
+			#handle a directive
 			elif isinstance(line, Directive):
-				pass
+				if line.name == '.define':
+					self._validate_args(line, [Id, Number])
+					defines[line.args[0].id] = line.args[1].val
+
+				#define a symbol as exported
+				elif line.name == '.global':
+					self._validate_args(line, [Id])
+					symbol_name = line.args[0].id
+
+					if symbol_name in symtab:
+						export_table.append(ExportEntry(
+							export_symbol=symbol_name,
+							addr=symtab[symbol_name]))
+					else:
+						self._assembly_error('.global defines an unknown label %s' % symbol_name, line.lineno)
+
+				#allocate n words of space and initialize them with zeros
+				elif line.name == '.alloc':
+					num = line.args[0].val
+					seg_data[addr.segment].extend([0] * num)
+
+				#allocate n words of space and initialize them with the values in the arguments
+				elif line.name == '.word':
+					data = []
+
+					for i, word_arg in enumerate(line.args):
+						if isinstance(word_arg, Number):
+							try:
+								data.extend([struct.pack("<I", word_arg.val)])
+							except:
+								self._assembly_error(".word -- argument %s is not a valid 32 bit word" % (i + 1,), line.lineno)
+						else:
+							self._assembly_error(".word -- argument %s is not a valid word" % (i + 1,), line.lineno)
+
+					seg_data[addr.segment].extend(data)
+
+				#allocate space for a string and zero terminate it
+				elif line.name == '.string':
+					data = []
+					for c in line.args[0].val:
+						data.extend([chr(ord(c)) + "\x00\x00\x00"])
+					data.extend(["\x00\x00\x00\x00"])
+					seg_data[addr.segment].extend(data)
+
+				else:
+					#.segment directives should have been stripped in the first assembler pass
+					assert line.name != '.segment'
+					self._assembly_error('Unknown directive %s' % line.name, line.lineno)
 
 			else:
 				self._assembly_error("Bad Assembly", line.lineno)
 
+		#create an objectfile containing all segments with their data, import-, export- and relocation tables
 		return ObjectFile.fromAssembler(
 			seg_data=seg_data,
 			export_table=export_table,

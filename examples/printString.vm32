@@ -1,0 +1,25 @@
+.SEGMENT code
+.GLOBAL startup
+
+startup:
+	MOV ds:0(strPtr), sayHello
+	MOV ds:0(counter), 1
+
+next:
+	CMP ds:0[strPtr], 0
+	JZ end
+	PRINT ds:0[strPtr]
+	ADD ds:0(strPtr), 1
+	JMP next
+
+end:
+	JMP end
+
+.SEGMENT data
+sayHello:
+	.string "Hello, World!"
+
+strPtr:
+	.alloc 1
+counter:
+	.alloc 1
