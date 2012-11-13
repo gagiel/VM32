@@ -40,9 +40,11 @@ def main(argc, argv):
 		linker = Linker()
 		image = linker.link(objectFiles)
 
+		binaryString = ""
 		for word in image:
-			outputFile.write(word)
+			binaryString += word
 
+		outputFile.write(binaryString)
 		outputFile.close()
 
 	except IOError, e:
