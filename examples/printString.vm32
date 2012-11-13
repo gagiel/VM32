@@ -3,7 +3,7 @@
 .GLOBAL startup
 
 startup:
-	MOV ds:0(strPtr), sayHello
+	MOV (strPtr), sayHello
 	MOV ds:0(counter), 1
 
 next:

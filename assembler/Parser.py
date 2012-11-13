@@ -120,43 +120,53 @@ class Parser(object):
 	def p_argument_3(self, p):
 		''' argument    : number '''
 		p[0] = p[1]
-	
+
 	def p_argument_4(self, p):
+		''' argument    : LPAREN ID RPAREN
+		'''
+		p[0] = MemRef(offset=0, id=Id(p[2]), segment="ds")
+
+	def p_argument_5(self, p):
+		''' argument    : LSQBRACKET ID RSQBRACKET
+		'''
+		p[0] = MemRef(offset=0, id=Id(p[2]), segment="ds")
+	
+	def p_argument_6(self, p):
 		''' argument    : number LPAREN ID RPAREN
 		'''
 		p[0] = MemRef(offset=p[1], id=Id(p[3]), segment="ds")
 
-	def p_argument_5(self, p):
+	def p_argument_7(self, p):
 		''' argument    : ID LPAREN ID RPAREN
 		'''
 		p[0] = MemRef(offset=Id(p[1]), id=Id(p[3]), segment="ds")
 
-	def p_argument_6(self, p):
+	def p_argument_8(self, p):
 		''' argument    : number LSQBRACKET ID RSQBRACKET
 		'''
 		p[0] = DoubleMemRef(offset=p[1], id=Id(p[3]), segment="ds")
 
-	def p_argument_7(self, p):
+	def p_argument_9(self, p):
 		''' argument    : ID LSQBRACKET ID RSQBRACKET
 		'''
 		p[0] = DoubleMemRef(offset=Id(p[1]), id=Id(p[3]), segment="ds")
 
-	def p_argument_8(self, p):
+	def p_argument_10(self, p):
 		''' argument    : ID COLON number LPAREN ID RPAREN
 		'''
 		p[0] = MemRef(offset=p[3], id=Id(p[5]), segment=p[1])
 
-	def p_argument_9(self, p):
+	def p_argument_11(self, p):
 		''' argument    : ID COLON ID LPAREN ID RPAREN
 		'''
 		p[0] = MemRef(offset=Id(p[3]), id=Id(p[5]), segment=p[1])
 
-	def p_argument_10(self, p):
+	def p_argument_12(self, p):
 		''' argument    : ID COLON number LSQBRACKET ID RSQBRACKET
 		'''
 		p[0] = DoubleMemRef(offset=p[3], id=Id(p[5]), segment=p[1])
 
-	def p_argument_11(self, p):
+	def p_argument_13(self, p):
 		''' argument    : ID COLON ID LSQBRACKET ID RSQBRACKET
 		'''
 		p[0] = DoubleMemRef(offset=Id(p[3]), id=Id(p[5]), segment=p[1])
