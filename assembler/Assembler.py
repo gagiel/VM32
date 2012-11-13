@@ -158,6 +158,8 @@ class Assembler(object):
 
 				elif line.name == '.privlvl':
 					self._validate_args(line, [Number])
+					if line.args[0].val < 0 or line.args[0].val > 255:
+						self._assembly_error(".privlvl -- argument needs to be a number between 0 and 255", line.lineno)
 					privilegeLevel = line.args[0].val
 
 				#define a symbol as exported
