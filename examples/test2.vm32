@@ -2,6 +2,7 @@
 .GLOBAL startup
 
 startup:
+	MOV (hang), 3
 	ADD R1, R0
 	#MOV R31, 1
 	#MOV R23, 2

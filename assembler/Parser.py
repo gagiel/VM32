@@ -129,12 +129,12 @@ class Parser(object):
 	def p_argument_5(self, p):
 		''' argument    : LPAREN ID RPAREN
 		'''
-		p[0] = MemRef(offset=0, id=Id(p[2]), segment="ds")
+		p[0] = MemRef(offset=None, id=Id(p[2]), segment="ds")
 
 	def p_argument_6(self, p):
 		''' argument    : LSQBRACKET ID RSQBRACKET
 		'''
-		p[0] = MemRef(offset=0, id=Id(p[2]), segment="ds")
+		p[0] = MemRef(offset=None, id=Id(p[2]), segment="ds")
 
 	def p_argument_7(self, p):
 		''' argument    : REGISTER LPAREN ID RPAREN
