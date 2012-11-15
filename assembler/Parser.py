@@ -8,6 +8,7 @@ from Exceptions import ParseError
 
 Number = namedtuple('Number', 'val')
 Id = namedtuple('Id', 'id')
+Register = namedtuple('Register', 'reg')
 String = namedtuple('String', 'val')
 MemRef = namedtuple('Memref', 'offset id segment')
 DoubleMemRef = namedtuple('DoubleMemRef', 'offset id segment')
@@ -110,66 +111,60 @@ class Parser(object):
 		p[0] = p[1] + [(p[3])]
 	
 	def p_argument_1(self, p):
+		''' argument    : REGISTER '''
+		p[0] = Register(p[1])
+
+	def p_argument_2(self, p):
 		''' argument    : ID '''
 		p[0] = Id(p[1])
 		
-	def p_argument_2(self, p):
+	def p_argument_3(self, p):
 		''' argument    : STRING '''
 		p[0] = String(p[1])
 	
-	def p_argument_3(self, p):
+	def p_argument_4(self, p):
 		''' argument    : number '''
 		p[0] = p[1]
 
-	def p_argument_4(self, p):
+	def p_argument_5(self, p):
 		''' argument    : LPAREN ID RPAREN
 		'''
 		p[0] = MemRef(offset=0, id=Id(p[2]), segment="ds")
 
-	def p_argument_5(self, p):
+	def p_argument_6(self, p):
 		''' argument    : LSQBRACKET ID RSQBRACKET
 		'''
 		p[0] = MemRef(offset=0, id=Id(p[2]), segment="ds")
-	
-	def p_argument_6(self, p):
-		''' argument    : number LPAREN ID RPAREN
-		'''
-		p[0] = MemRef(offset=p[1], id=Id(p[3]), segment="ds")
 
 	def p_argument_7(self, p):
-		''' argument    : ID LPAREN ID RPAREN
+		''' argument    : REGISTER LPAREN ID RPAREN
 		'''
-		p[0] = MemRef(offset=Id(p[1]), id=Id(p[3]), segment="ds")
+		p[0] = MemRef(offset=Register(p[1]), id=Id(p[3]), segment="ds")
 
 	def p_argument_8(self, p):
-		''' argument    : number LSQBRACKET ID RSQBRACKET
+		''' argument    : REGISTER LSQBRACKET ID RSQBRACKET
 		'''
-		p[0] = DoubleMemRef(offset=p[1], id=Id(p[3]), segment="ds")
+		p[0] = DoubleMemRef(offset=Register(p[1]), id=Id(p[3]), segment="ds")
 
 	def p_argument_9(self, p):
-		''' argument    : ID LSQBRACKET ID RSQBRACKET
+		''' argument    : ID COLON REGISTER LPAREN ID RPAREN
 		'''
-		p[0] = DoubleMemRef(offset=Id(p[1]), id=Id(p[3]), segment="ds")
+		p[0] = MemRef(offset=Register(p[3]), id=Id(p[5]), segment=p[1])
 
 	def p_argument_10(self, p):
-		''' argument    : ID COLON number LPAREN ID RPAREN
+		''' argument    : ID COLON REGISTER LSQBRACKET ID RSQBRACKET
 		'''
-		p[0] = MemRef(offset=p[3], id=Id(p[5]), segment=p[1])
+		p[0] = DoubleMemRef(offset=Register(p[3]), id=Id(p[5]), segment=p[1])
 
 	def p_argument_11(self, p):
-		''' argument    : ID COLON ID LPAREN ID RPAREN
+		''' argument    : ID COLON LPAREN ID RPAREN
 		'''
-		p[0] = MemRef(offset=Id(p[3]), id=Id(p[5]), segment=p[1])
+		p[0] = MemRef(offset=None, id=Id(p[4]), segment=p[1])
 
 	def p_argument_12(self, p):
-		''' argument    : ID COLON number LSQBRACKET ID RSQBRACKET
+		''' argument    : ID COLON LSQBRACKET ID RSQBRACKET
 		'''
-		p[0] = DoubleMemRef(offset=p[3], id=Id(p[5]), segment=p[1])
-
-	def p_argument_13(self, p):
-		''' argument    : ID COLON ID LSQBRACKET ID RSQBRACKET
-		'''
-		p[0] = DoubleMemRef(offset=Id(p[3]), id=Id(p[5]), segment=p[1])
+		p[0] = DoubleMemRef(offset=None, id=Id(p[4]), segment=p[1])
 
 	def p_number(self, p):
 		''' number  : DEC

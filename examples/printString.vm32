@@ -4,13 +4,13 @@
 
 startup:
 	MOV (strPtr), sayHello
-	MOV ds:0(counter), 1
+	MOV ds:(counter), 0
 
 next:
-	CMP ds:0[strPtr], 0
+	CMP ds:[strPtr], 0
 	JZ end
-	PRINT ds:0[strPtr]
-	ADD ds:0(strPtr), 1
+	PRINT ds:[strPtr]
+	ADD ds:(strPtr), 1
 	JMP next
 
 end:

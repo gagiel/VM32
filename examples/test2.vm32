@@ -1,0 +1,11 @@
+.SEGMENT code
+.GLOBAL startup
+
+startup:
+	ADD R1, R0
+	#MOV R31, 1
+	#MOV R23, 2
+	#MOV ds:(hang), es:R1(hang)
+
+hang:
+	JMP hang

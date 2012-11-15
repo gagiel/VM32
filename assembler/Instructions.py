@@ -1,7 +1,7 @@
 import struct
 
 from common.Opcodes import *
-from Parser import Number, Id, String, MemRef, DoubleMemRef, Instruction, Directive, LabelDef
+from Parser import Number, Id, String, MemRef, DoubleMemRef, Instruction, Directive, LabelDef, Register
 from Exceptions import InstructionError
 
 from ObjectFile import ImportEntry, RelocEntry
@@ -17,40 +17,40 @@ _INSTR = {
 		'nargs': 2,
 		'op': OP_ADD,
 		'paramtypes': [
-			[MemRef, DoubleMemRef],
-			[Id, Number, MemRef, DoubleMemRef],
+			[Register, MemRef, DoubleMemRef],
+			[Id, Register, Number, MemRef, DoubleMemRef],
 		]
 	},
 	'sub': {
 		'nargs': 2,
 		'op': OP_SUB,
 		'paramtypes': [
-			[MemRef, DoubleMemRef],
-			[Id, Number, MemRef, DoubleMemRef],
+			[Register, MemRef, DoubleMemRef],
+			[Id, Register, Number, MemRef, DoubleMemRef],
 		]
 	},
 	'mul': {
 		'nargs': 2,
 		'op': OP_MUL,
 		'paramtypes': [
-			[MemRef, DoubleMemRef],
-			[Id, Number, MemRef, DoubleMemRef],
+			[Register, MemRef, DoubleMemRef],
+			[Id, Register, Number, MemRef, DoubleMemRef],
 		]
 	},
 	'div': {
 		'nargs': 2,
 		'op': OP_DIV,
 		'paramtypes': [
-			[MemRef, DoubleMemRef],
-			[Id, Number, MemRef, DoubleMemRef],
+			[Register, MemRef, DoubleMemRef],
+			[Id, Register, Number, MemRef, DoubleMemRef],
 		]
 	},
 	'mod': {
 		'nargs': 2,
 		'op': OP_MOD,
 		'paramtypes': [
-			[MemRef, DoubleMemRef],
-			[Id, Number, MemRef, DoubleMemRef],
+			[Register, MemRef, DoubleMemRef],
+			[Id, Register, Number, MemRef, DoubleMemRef],
 		]
 	},
 
@@ -58,32 +58,32 @@ _INSTR = {
 		'nargs': 2,
 		'op': OP_OR,
 		'paramtypes': [
-			[MemRef, DoubleMemRef],
-			[Id, Number, MemRef, DoubleMemRef],
+			[Register, MemRef, DoubleMemRef],
+			[Id, Register, Number, MemRef, DoubleMemRef],
 		]
 	},
 	'xor': {
 		'nargs': 2,
 		'op': OP_XOR,
 		'paramtypes': [
-			[MemRef, DoubleMemRef],
-			[Id, Number, MemRef, DoubleMemRef],
+			[Register, MemRef, DoubleMemRef],
+			[Id, Register, Number, MemRef, DoubleMemRef],
 		]
 	},
 	'and': {
 		'nargs': 2,
 		'op': OP_AND,
 		'paramtypes': [
-			[MemRef, DoubleMemRef],
-			[Id, Number, MemRef, DoubleMemRef],
+			[Register, MemRef, DoubleMemRef],
+			[Id, Register, Number, MemRef, DoubleMemRef],
 		]
 	},
 	'not': {
 		'nargs': 2,
 		'op': OP_NOT,
 		'paramtypes': [
-			[MemRef, DoubleMemRef],
-			[Id, Number, MemRef, DoubleMemRef],
+			[Register, MemRef, DoubleMemRef],
+			[Id, Register, Number, MemRef, DoubleMemRef],
 		]
 	},
 
@@ -91,8 +91,8 @@ _INSTR = {
 		'nargs': 2,
 		'op': OP_MOV,
 		'paramtypes': [
-			[MemRef, DoubleMemRef, PARAM_SPECIAL_REGISTER],
-			[Id, Number, MemRef, DoubleMemRef, PARAM_SPECIAL_REGISTER],
+			[Register, MemRef, DoubleMemRef, PARAM_SPECIAL_REGISTER],
+			[Id, Register, Number, MemRef, DoubleMemRef, PARAM_SPECIAL_REGISTER],
 		]
 	},
 
@@ -112,7 +112,7 @@ _INSTR = {
 		'nargs': 1,
 		'op': OP_PRINT,
 		'paramtypes': [
-			[Id, Number, MemRef, DoubleMemRef]
+			[Register, Id, Number, MemRef, DoubleMemRef]
 		]
 	},
 
@@ -121,8 +121,8 @@ _INSTR = {
 		'nargs': 2,
 		'op': OP_CMP,
 		'paramtypes': [
-			[MemRef, DoubleMemRef],
-			[Id, Number, MemRef, DoubleMemRef],
+			[Register, MemRef, DoubleMemRef],
+			[Register, Id, Number, MemRef, DoubleMemRef],
 		]
 	},
 
@@ -131,57 +131,55 @@ _INSTR = {
 		'nargs': 1,
 		'op': OP_JMP,
 		'paramtypes': [
-			[Id, Number, MemRef, DoubleMemRef]
+			[Register, Id, Number, MemRef, DoubleMemRef]
 		]
 	},
 	'jz': {
 		'nargs': 1,
 		'op': OP_JZ,
 		'paramtypes': [
-			[Id, Number, MemRef, DoubleMemRef],
+			[Register, Id, Number, MemRef, DoubleMemRef],
 		]
 	},
 	'jnz': {
 		'nargs': 1,
 		'op': OP_JNZ,
 		'paramtypes': [
-			[Id, Number, MemRef, DoubleMemRef],
+			[Register, Id, Number, MemRef, DoubleMemRef],
 		]
 	},
 	'jgt': {
 		'nargs': 1,
 		'op': OP_JGT,
 		'paramtypes': [
-			[Id, Number, MemRef, DoubleMemRef],
+			[Register, Id, Number, MemRef, DoubleMemRef],
 		]
 	},
 	'call': {
 		'nargs': 1,
 		'op': OP_CALL,
 		'paramtypes': [
-			[Id, Number, MemRef, DoubleMemRef],
+			[Register, Id, Number, MemRef, DoubleMemRef],
 		]
 	},
 	'ret': {
 		'nargs': 0,
 		'op': OP_RET,
-		'paramtypes': [
-			[Id, Number, MemRef, DoubleMemRef],
-		]
+		'paramtypes': []
 	},
 
 	'push': {
 		'nargs': 1,
 		'op': OP_PUSH,
 		'paramtypes': [
-			[Id, Number, MemRef, DoubleMemRef],
+			[Register, Id, Number, MemRef, DoubleMemRef],
 		]
 	},
 	'pop': {
 		'nargs': 1,
 		'op': OP_POP,
 		'paramtypes': [
-			[Id, Number, MemRef, DoubleMemRef],
+			[Register, Id, Number, MemRef, DoubleMemRef],
 		]
 	},
 
@@ -210,8 +208,29 @@ _INSTR = {
 def doesInstructionExist(instruction):
 	return instruction in _INSTR
 
-def getInstructionLength(instruction):
-	return 1 + _INSTR[instruction]['nargs']
+def getInstructionLength(instruction, args):
+	_validateInstruction(instruction, args)
+
+	arglen = 0
+	for arg in args:
+		#check if we need an extra word for an argument after the opcode
+		if isinstance(arg, Id) or isinstance(arg, Number) or isinstance(arg, MemRef) or isinstance(arg, DoubleMemRef):
+			arglen += 1
+
+	return 1 + arglen
+
+def _validateInstruction(name, args):
+	if not doesInstructionExist(name):
+		raise InstructionError("Unknown instruction %s" % name)
+
+	instr = _INSTR[name]
+
+	if len(args) != instr['nargs']:
+		raise InstructionError("Instruction %s expected %d arguments, got %d" % (name, instr['nargs'], len(args)))
+
+	for i, arg in enumerate(args):
+		if not type(arg) in instr['paramtypes'][i]:
+			raise InstructionError("Unexpected argument for instruction %s at position %d of type %s" % (name, i+1, arg.__class__.__name__))
 
 def assembleInstruction(name, args, addr, symtab, defines, privilegeLevel):
 	""" Assembles an instruction
@@ -234,17 +253,9 @@ def assembleInstruction(name, args, addr, symtab, defines, privilegeLevel):
 		privilegeLevel:
 			The privilege level of this instruction
 	"""
-	if not doesInstructionExist(name):
-		raise InstructionError("Unknown instruction %s" % name)
+	_validateInstruction(name, args)
 
 	instr = _INSTR[name]
-
-	if len(args) != instr['nargs']:
-		raise InstructionError("Instruction %s expected %d arguments, got %d" % (name, instr['nargs'], len(args)))
-
-	for i, arg in enumerate(args):
-		if not type(arg) in instr['paramtypes'][i]:
-			raise InstructionError("Unexpected argument for instruction %s at position %d of type %s" % (name, i+1, arg.__class__.__name__))
 	
 	operandValues = []
 	operandTypes = []
@@ -254,47 +265,67 @@ def assembleInstruction(name, args, addr, symtab, defines, privilegeLevel):
 	#parse all arguments the instruction needs and gather the operand type, value, import and relocation information
 	for n in range(instr['nargs']):
 		(operandType, operandValue, importedSymbol, relocation) = _parseAgumentType(args[n], symtab)
-		operandValues.append(operandValue)
+		if operandValue != None:
+			operandValues.append(operandValue)
 		operandTypes.append(operandType)
 		relocations.append(relocation)
 		importedSymbols.append(importedSymbol)
 
 	#create the instruction and operand sequence based on the number of arguments
-	if instr['nargs'] == 0:
-		assembled = [
-			struct.pack("<BBBB", instr["op"], privilegeLevel, 0, 0)
-		]
-	elif instr['nargs'] == 1:
-		assembled = [
-			struct.pack("<BBBB", instr["op"], privilegeLevel, operandTypes[0], 0),
-			struct.pack("<I", operandValues[0])
-		]
-	elif instr['nargs'] == 2:
-		assembled = [
-			struct.pack("<BBBB", instr["op"], privilegeLevel, operandTypes[0], operandTypes[1]),
-			struct.pack("<I", operandValues[0]),
-			struct.pack("<I", operandValues[1])
-		]
-	else:
-		raise InstructionError("Instruction seems to need more than 2 arguments. This is an internal error in the assembler")
+	if len(operandTypes) == 0:
+		operandTypes.extend([0, 0])
+	elif len(operandTypes) == 1:
+		operandTypes.append(0)
+
+	assert len(operandTypes) == 2, "len(operandTypes) is not 2"
+	
+	assembled = [
+		struct.pack("<BBBB", instr["op"], privilegeLevel, operandTypes[0], operandTypes[1])
+	]
+
+	#append argument values
+	assembled.extend(map(lambda x: struct.pack("<I", x), operandValues))
+
+	# if instr['nargs'] == 0:
+	# 	assembled = [
+	# 		struct.pack("<BBBB", instr["op"], privilegeLevel, 0, 0)
+	# 	]
+	# elif instr['nargs'] == 1:
+	# 	assembled = [
+	# 		struct.pack("<BBBB", instr["op"], privilegeLevel, operandTypes[0], 0),
+	# 		struct.pack("<I", operandValues[0])
+	# 	]
+	# elif instr['nargs'] == 2:
+	# 	assembled = [
+	# 		struct.pack("<BBBB", instr["op"], privilegeLevel, operandTypes[0], operandTypes[1]),
+	# 		struct.pack("<I", operandValues[0]),
+	# 		struct.pack("<I", operandValues[1])
+	# 	]
+	# else:
+	# 	raise InstructionError("Instruction seems to need more than 2 arguments. This is an internal error in the assembler")
 
 	#put everything into a container object and return it for further processing
 	return AssembledInstruction(op=assembled, import_req=importedSymbols, reloc_req=relocations)
 
 def _parseAgumentType(arg, symtab):
 	#The argument is a symbolic name
+	if isinstance(arg, Register):
+		if arg.reg > 30:
+			raise InstructionError("Invalid register 'r%s'" % arg.reg)
+
+		return (PARAM_REGISTER << 5 | arg.reg, None, None, None)
 	if isinstance(arg, Id):
 		#check if labelname of the MemRef is locally defined
 		#if it is, then we don't have an external symbol, but a relocation
 		#otherwise we have a relocation
 		if arg.id in symtab:
-			return (PARAM_IMMEDIATE, symtab[arg.id].offset, None, symtab[arg.id].segment)
+			return (PARAM_IMMEDIATE << 5, symtab[arg.id].offset, None, symtab[arg.id].segment)
 		else:
-			return (PARAM_IMMEDIATE, 0, arg.id, None)
+			return (PARAM_IMMEDIATE << 5, 0, arg.id, None)
 
 	#The argument is a number
 	elif isinstance(arg, Number):
-		return (PARAM_IMMEDIATE, arg.val, None, None)
+		return (PARAM_IMMEDIATE << 5, arg.val, None, None)
 
 	#The argument is a memory reference
 	elif isinstance(arg, MemRef):
@@ -310,11 +341,19 @@ def _parseAgumentType(arg, symtab):
 			externdefinedSymbol = arg.id.id
 			relocation = None
 
+		#register 31 is zero-register
+		regOffset = 31
+		if arg.offset != None:
+			if arg.offset.reg > 30:
+				raise InstructionError("Invalid register 'r%s'" % arg.offset.reg)
+
+			regOffset = arg.offset.reg
+
 		#create the operand information based on which cpu memory segment is selected
 		if arg.segment == 'ds':
-			return (PARAM_MEMORY_SINGLE_DS, offset, externdefinedSymbol, relocation)
+			return (PARAM_MEMORY_SINGLE_DS << 5 | regOffset, offset, externdefinedSymbol, relocation)
 		elif arg.segment == 'es':
-			return (PARAM_MEMORY_SINGLE_ES, offset, externdefinedSymbol, relocation)
+			return (PARAM_MEMORY_SINGLE_ES << 5 | regOffset, offset, externdefinedSymbol, relocation)
 		else:
 			raise Exception("Unknown memory segment: %s" % arg.segment)
 
@@ -332,11 +371,19 @@ def _parseAgumentType(arg, symtab):
 			externdefinedSymbol = arg.id.id
 			relocation = None
 
+		#register 31 is zero-register
+		regOffset = 31
+		if arg.offset != None:
+			if arg.offset.reg > 30:
+				raise InstructionError("Invalid register 'r%s'" % arg.offset.reg)
+
+			regOffset = arg.offset.reg
+
 		#create the operand information based on which cpu memory segment is selected
 		if arg.segment == 'ds':
-			return (PARAM_MEMORY_DOUBLE_DS, offset, externdefinedSymbol, relocation)
+			return (PARAM_MEMORY_DOUBLE_DS << 5 | regOffset, offset, externdefinedSymbol, relocation)
 		elif arg.segment == 'es':
-			return (PARAM_MEMORY_DOUBLE_ES, offset, externdefinedSymbol, relocation)
+			return (PARAM_MEMORY_DOUBLE_ES << 5 | regOffset, offset, externdefinedSymbol, relocation)
 		else:
 			raise Exception("Unknown memory segment: %s" % arg.segment)
 

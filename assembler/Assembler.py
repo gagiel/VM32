@@ -71,7 +71,7 @@ class Assembler(object):
 					pass
 				elif doesInstructionExist(line.name):
 					addr_imf.append((saddr, line))
-					seg_addr[cur_seg] += getInstructionLength(line.name)
+					seg_addr[cur_seg] += getInstructionLength(line.name, line.args)
 				else:
 					self._assembly_error("Unknown instruction: '%s" % line.name, line.lineno)
 
