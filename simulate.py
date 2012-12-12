@@ -21,8 +21,20 @@ def main(argc, argv):
 		logging.basicConfig(level=logging.INFO)
 	logger = logging.getLogger('Simulator Driver')
 
+	#logger.debug("Preparing memory image")
+	#memoryImage = arguments.memoryImage.read()
+	#if len(memoryImage) % 4 != 0:
+	#	logger.error("The length of the memory image has to be a multiple of 4 Bytes")
+
+	#wordifiedMemory = []
+	#for i in range(len(memoryImage) / 4):
+	#	wordifiedMemory.append(memoryImage[i*4:(i*4)+4])
+
 	logger.debug("Creating CPU")
 	cpu = CPU(arguments.memoryImage.read())
+
+	for i in range(10000):
+		cpu.doSimulationStep()
 
 if __name__ == '__main__':
 	main(len(sys.argv), sys.argv)

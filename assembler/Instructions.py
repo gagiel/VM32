@@ -155,6 +155,13 @@ _INSTR = {
 			[Register, Id, Number, MemRef, DoubleMemRef],
 		]
 	},
+	'jge': {
+		'nargs': 1,
+		'op': OP_JGE,
+		'paramtypes': [
+			[Register, Id, Number, MemRef, DoubleMemRef],
+		]
+	},
 	'call': {
 		'nargs': 1,
 		'op': OP_CALL,
