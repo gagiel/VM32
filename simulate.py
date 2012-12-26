@@ -33,8 +33,10 @@ def main(argc, argv):
 	logger.debug("Creating CPU")
 	cpu = CPU(arguments.memoryImage.read())
 
-	for i in range(10000):
-		cpu.doSimulationStep()
+	while cpu.doSimulationStep():
+		pass
+
+	logger.info("Simulation ended")
 
 if __name__ == '__main__':
 	main(len(sys.argv), sys.argv)

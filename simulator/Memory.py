@@ -24,8 +24,6 @@ class Memory(object):
 			instance.memory[i] = struct.unpack("<I", memstr[i*4:(i*4)+4])[0]
 
 		return instance
-	
-	#TODO: static factory method createMemoryFromBinaryString(str)
 
 	def writeBlob(self, address, blob):
 		for word in blob:
