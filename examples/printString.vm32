@@ -4,7 +4,7 @@
 
 startup:
 	MOV (strPtr), sayHello
-	MOV (counter), 0
+#	MOV (counter), 0
 
 next:
 	CMP [strPtr], 0
@@ -14,13 +14,14 @@ next:
 	JMP next
 
 end:
+	HALT
 	JMP end
 
 .SEGMENT data
 sayHello:
-	.string "Hello, World!"
+	.string "Hello, World!\n"
 
 strPtr:
 	.alloc 1
-counter:
-	.alloc 1
+#counter:
+#	.alloc 1

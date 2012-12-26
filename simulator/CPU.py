@@ -5,6 +5,7 @@ from common import Opcodes
 
 import struct
 import logging
+import sys
 
 from .Instructions import doesInstructionExist, getArgumentCount
 
@@ -217,7 +218,8 @@ class CPU(object):
 		#PRINT
 		elif opcode == Opcodes.OP_PRINT:
 			#print "Opcodes.OP_PRINT"
-			print chr(operand1 & 0xFF)
+			sys.stdout.write(chr(operand1 & 0xFF))
+			sys.stdout.flush()
 
 		#CMP
 		elif opcode == Opcodes.OP_CMP:
