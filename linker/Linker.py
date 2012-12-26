@@ -68,6 +68,7 @@ class Linker(object):
 						self._object_id(obj), reloc_seg))
 
 				mapped_address = segment_map[idx][reloc_seg]
+				mapped_address += struct.unpack("<I", obj.seg_data[addr.segment][addr.offset])[0]
 
 				self._patch_segment_data(obj.seg_data[addr.segment], addr.offset, mapped_address, reloc_seg)
 
@@ -90,6 +91,7 @@ class Linker(object):
 				self._patch_segment_data(obj.seg_data[import_addr.segment], import_addr.offset, mapped_address, sym)
 
 	def _patch_segment_data(self, seg_data, instr_offset, mapped_address, name):
+		#print "%x %x %s" % (instr_offset, mapped_address, name)
 		if instr_offset > len(seg_data)-1:
 			self._linker_error("Patching (%s) of '%s', bad offset into segment" % (
 				type, name))
