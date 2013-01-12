@@ -271,7 +271,7 @@ def assembleInstruction(name, args, addr, symtab, defines, privilegeLevel):
 
 	#parse all arguments the instruction needs and gather the operand type, value, import and relocation information
 	for n in range(instr['nargs']):
-		(operandType, operandValue, importedSymbol, relocation) = _parseAgumentType(args[n], symtab)
+		(operandType, operandValue, importedSymbol, relocation) = _parseAgumentType(args[n], symtab, defines)
 		if operandValue != None:
 			operandValues.append(operandValue)
 		operandTypes.append(operandType)
@@ -314,7 +314,7 @@ def assembleInstruction(name, args, addr, symtab, defines, privilegeLevel):
 	#put everything into a container object and return it for further processing
 	return AssembledInstruction(op=assembled, import_req=importedSymbols, reloc_req=relocations)
 
-def _parseAgumentType(arg, symtab):
+def _parseAgumentType(arg, symtab, deftab):
 	#The argument is a symbolic name
 	if isinstance(arg, Register):
 		if arg.reg > 30:
@@ -322,6 +322,11 @@ def _parseAgumentType(arg, symtab):
 
 		return (PARAM_REGISTER << 5 | arg.reg, None, None, None)
 	if isinstance(arg, Id):
+		#check if labelname of the MemRef is a define
+		#if so, take it, and return, otherwise check for symbols or import it
+		if deftab.has_key(arg.id):
+			return (PARAM_IMMEDIATE << 5, deftab[arg.id], None, None)
+
 		#check if labelname of the MemRef is locally defined
 		#if it is, then we don't have an external symbol, but a relocation
 		#otherwise we have a relocation
@@ -336,6 +341,16 @@ def _parseAgumentType(arg, symtab):
 
 	#The argument is a memory reference
 	elif isinstance(arg, MemRef):
+		#check if operand is a define
+		#if so, take it, and return, otherwise check for local symbols and registers or import it
+		if deftab.has_key(arg.id.id):
+			if arg.segment == 'ds':
+				return (PARAM_MEMORY_SINGLE_DS << 5, deftab[arg.id.id], None, None)
+			elif arg.segment == 'es':
+				return (PARAM_MEMORY_SINGLE_ES << 5, deftab[arg.id.id], None, None)
+			else:
+				raise Exception("Unknown memory segment: %s" % arg.segment)
+
 		#check if labelname of the MemRef is locally defined
 		#if it is, then we don't have an external symbol, but a relocation
 		#otherwise we have a relocation
@@ -366,6 +381,16 @@ def _parseAgumentType(arg, symtab):
 
 	#The argument is a double memory reference
 	elif isinstance(arg, DoubleMemRef):
+		#check if operand is a define
+		#if so, take it, and return, otherwise check for local symbols and registers or import it
+		if deftab.has_key(arg.id.id):
+			if arg.segment == 'ds':
+				return (PARAM_MEMORY_DOUBLE_DS << 5, deftab[arg.id.id], None, None)
+			elif arg.segment == 'es':
+				return (PARAM_MEMORY_DOUBLE_ES << 5, deftab[arg.id.id], None, None)
+			else:
+				raise Exception("Unknown memory segment: %s" % arg.segment)
+
 		#check if labelname of the MemRef is locally defined
 		#if it is, then we don't have an external symbol, but a relocation
 		#otherwise we have a relocation
