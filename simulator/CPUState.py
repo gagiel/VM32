@@ -32,7 +32,7 @@ class CPUState(object):
 	def getResultingExtraAddress(self, offset):
 		return self.ES + offset
 
-	def getResultingStackAddress(self, offset):
+	def getResultingStackAddress(self):
 		return self.SS + self.SP
 
 	def getRegisterAddress(self, reg):
@@ -57,5 +57,12 @@ class CPUState(object):
 	def getGreaterEqualFlag(self):
 		return (self.Flags & (1<<1)) != 0
 
-	#TODO: implement flags as in M32
+	def decrementStackPointer(self):
+		self.SS -= 1
+		self.SS &= 0xFFFFFFFF
+
+	def incrementStackPointer(self):
+		self.SS += 1
+		self.SS &= 0xFFFFFFFF
+
 	#TODO: get string reprensation for printing the regs

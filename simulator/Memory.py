@@ -31,6 +31,7 @@ class Memory(object):
 			address += 1
 
 	def writeWord(self, address, word):
+		#self.logger.debug("Writing value 0x%x to address 0x%x", word, address)
 		if address >= MEMORY_SIZE or address < 0:
 			raise MemoryAddressOutOfBoundsException("Address {0} for write operation out of bounds".format(address))
 		
@@ -40,6 +41,7 @@ class Memory(object):
 		self.memory[address] = word
 
 	def readWord(self, address):
+		#self.logger.debug("Reading from address 0x%x", address)
 		if address >= MEMORY_SIZE or address < 0:
 			raise MemoryAddressOutOfBoundsException("Address {0} for read operation out of bounds".format(address))
 		

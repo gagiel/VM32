@@ -278,12 +278,13 @@ class CPU(object):
 		
 		#PUSH
 		elif opcode == Opcodes.OP_PUSH:
-			print "Opcodes.OP_PUSH"
-		
+			self.state.decrementStackPointer()
+			self.memory.writeWord(self.state.getResultingStackAddress(), operand1)
+
 		#POP
 		elif opcode == Opcodes.OP_POP:
-			print "Opcodes.OP_POP"
-		
+			writebackValue = self.memory.readWord(self.state.getResultingStackAddress())
+			self.state.incrementStackPointer()
 		#INT
 		elif opcode == Opcodes.OP_INT:
 			print "Opcodes.OP_INT"
