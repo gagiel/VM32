@@ -2,7 +2,16 @@
 .privLvl 0
 .GLOBAL startup
 
+.define CHAR, 0x41
+.define LOCATION, 0x1000
+
 startup:
+	PUSH CHAR
+	POP (LOCATION)
+	PRINT (LOCATION)
+
+	CALL someFunction
+
 	MOV (strPtr), sayHello
 #	MOV (counter), 0
 
@@ -16,6 +25,10 @@ next:
 end:
 	HALT
 	JMP end
+
+someFunction:
+	PRINT (sayHello)
+	RET
 
 .SEGMENT data
 sayHello:

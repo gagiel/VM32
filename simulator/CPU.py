@@ -156,18 +156,18 @@ class CPU(object):
 		if opcode == Opcodes.OP_ADD:
 			#print "OP_ADD"
 			writebackValue = (operand1 + operand2) & 0xFFFFFFFF
-		
+
 		#SUB
 		elif opcode == Opcodes.OP_SUB:
 			#print "OP_SUB"
 			#TODO 2er komplement foo?
 			writebackValue = (operand1 - operand2) & 0xFFFFFFFF
-		
+
 		#MUL
 		elif opcode == Opcodes.OP_MUL:
 			#print "Opcodes.OP_MUL"
 			writebackValue = (operand1 * operand2) & 0xFFFFFFFF
-		
+
 		#DIV
 		elif opcode == Opcodes.OP_DIV:
 			#print "Opcodes.OP_DIV"
@@ -175,46 +175,46 @@ class CPU(object):
 				#TODO raise cpu exception
 				pass
 			writebackValue = (operand1 / operand2) & 0xFFFFFFFF
-		
+
 		#MOD
 		elif opcode == Opcodes.OP_MOD:
 			#print "OP_MOD"
 			writebackValue = (operand1 % operand2) & 0xFFFFFFFF
-		
+
 		#OR
 		elif opcode == Opcodes.OP_OR:
 			#print "OP_OR"
 			writebackValue = operand1 | operand2
-		
+
 		#XOR
 		elif opcode == Opcodes.OP_XOR:
 			#print "OP_XOR"
 			writebackValue = operand1 ^ operand2
-		
+
 		#AND
 		elif opcode == Opcodes.OP_AND:
 			#print "OP_AND"
 			writebackValue = operand1 & operand2
-		
+
 		#NOT
 		elif opcode == Opcodes.OP_NOT:
 			#print "OP_NOT"
 			writebackValue = operand1 ^ operand2
-		
+
 		#MOV
 		elif opcode == Opcodes.OP_MOV:
 			#print "OP_MOV"
 			writebackValue = operand2
-		
+
 		#NOP
 		elif opcode == Opcodes.OP_NOP:
 			pass
-		
+
 		#HALT
 		elif opcode == Opcodes.OP_HALT:
 			#print "Opcodes.OP_HALT"
 			return False
-		
+
 		#PRINT
 		elif opcode == Opcodes.OP_PRINT:
 			#print "Opcodes.OP_PRINT"
@@ -239,7 +239,7 @@ class CPU(object):
 			#print "Opcodes.OP_JMP"
 			self.state.IP = operand1
 			return True
-		
+
 		#JZ
 		elif opcode == Opcodes.OP_JZ:
 			#print "Opcodes.OP_JZ"
@@ -267,36 +267,42 @@ class CPU(object):
 			if self.state.getGreaterEqualFlag():
 				self.state.IP = operand1
 				return True
-		
+
 		#CALL
 		elif opcode == Opcodes.OP_CALL:
-			print "Opcodes.OP_CALL"
-		
+			#push return address
+			self.pushToStack(self.state.IP + ipadd)
+
+			#set new IP
+			self.state.IP = operand1
+			return True
+
 		#RET
 		elif opcode == Opcodes.OP_RET:
-			print "Opcodes.OP_RET"
+			#get new IP from stack
+			self.state.IP = self.popFromStack()
+			return True
 		
 		#PUSH
 		elif opcode == Opcodes.OP_PUSH:
-			self.state.decrementStackPointer()
-			self.memory.writeWord(self.state.getResultingStackAddress(), operand1)
+			self.pushToStack(operand1)
 
 		#POP
 		elif opcode == Opcodes.OP_POP:
-			writebackValue = self.memory.readWord(self.state.getResultingStackAddress())
-			self.state.incrementStackPointer()
+			writebackValue = self.popFromStack()
+
 		#INT
 		elif opcode == Opcodes.OP_INT:
 			print "Opcodes.OP_INT"
-		
+
 		#RETI
 		elif opcode == Opcodes.OP_RETI:
 			print "Opcodes.OP_RETI"
-		
+
 		#VMRESUME
 		elif opcode == Opcodes.OP_VMRESUME:
 			print "Opcodes.OP_VMRESUME"
-		
+
 		#Unknown - internal error
 		else:
 			self.logger.error("Internal simulator error: Don't know how to simulate instruction %x. I'm so sorry! :(", opcode)
@@ -318,6 +324,14 @@ class CPU(object):
 
 		return True
 
+	def pushToStack(self, value):
+		self.state.decrementStackPointer()
+		self.memory.writeWord(self.state.getResultingStackAddress(), value)
+
+	def popFromStack(self):
+		stackValue = self.memory.readWord(self.state.getResultingStackAddress())
+		self.state.incrementStackPointer()
+		return stackValue
 
 	def raiseInterrupt(self):
 		return
