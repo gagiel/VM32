@@ -330,13 +330,22 @@ def _parseAgumentType(arg, symtab, deftab):
 
 	#The argument is a memory reference
 	elif isinstance(arg, MemRef):
+		#Get register offset for memory reference operation
+		#register 31 is zero-register
+		regOffset = 31
+		if arg.offset != None:
+			if arg.offset.reg > 30:
+				raise InstructionError("Invalid register 'r%s'" % arg.offset.reg)
+
+			regOffset = arg.offset.reg
+
 		#check if operand is a define
 		#if so, take it, and return, otherwise check for local symbols and registers or import it
 		if deftab.has_key(arg.id.id):
 			if arg.segment == 'ds':
-				return (PARAM_MEMORY_SINGLE_DS << 5, deftab[arg.id.id], None, None)
+				return (PARAM_MEMORY_SINGLE_DS << 5 | regOffset, deftab[arg.id.id], None, None)
 			elif arg.segment == 'es':
-				return (PARAM_MEMORY_SINGLE_ES << 5, deftab[arg.id.id], None, None)
+				return (PARAM_MEMORY_SINGLE_ES << 5 | regOffset, deftab[arg.id.id], None, None)
 			else:
 				raise Exception("Unknown memory segment: %s" % arg.segment)
 
@@ -351,14 +360,6 @@ def _parseAgumentType(arg, symtab, deftab):
 			offset = 0
 			externdefinedSymbol = arg.id.id
 			relocation = None
-
-		#register 31 is zero-register
-		regOffset = 31
-		if arg.offset != None:
-			if arg.offset.reg > 30:
-				raise InstructionError("Invalid register 'r%s'" % arg.offset.reg)
-
-			regOffset = arg.offset.reg
 
 		#create the operand information based on which cpu memory segment is selected
 		if arg.segment == 'ds':
@@ -370,13 +371,22 @@ def _parseAgumentType(arg, symtab, deftab):
 
 	#The argument is a double memory reference
 	elif isinstance(arg, DoubleMemRef):
+		#Get register offset for memory reference operation
+		#register 31 is zero-register
+		regOffset = 31
+		if arg.offset != None:
+			if arg.offset.reg > 30:
+				raise InstructionError("Invalid register 'r%s'" % arg.offset.reg)
+
+			regOffset = arg.offset.reg
+
 		#check if operand is a define
 		#if so, take it, and return, otherwise check for local symbols and registers or import it
 		if deftab.has_key(arg.id.id):
 			if arg.segment == 'ds':
-				return (PARAM_MEMORY_DOUBLE_DS << 5, deftab[arg.id.id], None, None)
+				return (PARAM_MEMORY_DOUBLE_DS << 5 | regOffset, deftab[arg.id.id], None, None)
 			elif arg.segment == 'es':
-				return (PARAM_MEMORY_DOUBLE_ES << 5, deftab[arg.id.id], None, None)
+				return (PARAM_MEMORY_DOUBLE_ES << 5 | regOffset, deftab[arg.id.id], None, None)
 			else:
 				raise Exception("Unknown memory segment: %s" % arg.segment)
 
@@ -391,14 +401,6 @@ def _parseAgumentType(arg, symtab, deftab):
 			offset = 0
 			externdefinedSymbol = arg.id.id
 			relocation = None
-
-		#register 31 is zero-register
-		regOffset = 31
-		if arg.offset != None:
-			if arg.offset.reg > 30:
-				raise InstructionError("Invalid register 'r%s'" % arg.offset.reg)
-
-			regOffset = arg.offset.reg
 
 		#create the operand information based on which cpu memory segment is selected
 		if arg.segment == 'ds':
