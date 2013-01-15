@@ -36,7 +36,10 @@ class CPU(object):
 		curWord = self.memory.readBinary(self.state.getResultingInstructionAddress())
 		(opcode, privlvl, operandType1, operandType2) = struct.unpack("<BBBB", curWord)
 
+		registerOperand1 = operandType1 & 0x1F
 		operandType1 = operandType1 >> 5
+
+		registerOperand2 = operandType2 & 0x1F
 		operandType2 = operandType2 >> 5
 
 		if not doesInstructionExist(opcode):
@@ -102,8 +105,8 @@ class CPU(object):
 
 			elif operandType1 == Opcodes.PARAM_SPECIAL_REGISTER:
 				print "Op1: PARAM_SPECIAL_REGISTER"
-				#TODO get register contents
-				pass
+				operand1 = self.state.getSpecialRegister(registerOperand1)
+				writebackFunction = lambda val: self.state.setSpecialRegister(registerOperand1, val)
 
 			else:
 				self.logger.error("Unknown operand type for operand 1: %x", operandType1)
@@ -141,7 +144,7 @@ class CPU(object):
 				ipadd += 1
 
 			elif operandType2 == Opcodes.PARAM_SPECIAL_REGISTER:
-				pass
+				operand2 = self.state.getSpecialRegister(registerOperand2)
 
 			else:
 				self.logger.error("Unknown operand type for operand 2: %x", operandType2)

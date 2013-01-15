@@ -1,0 +1,1 @@
+class CPUStateError(Exception): pass

@@ -1,3 +1,5 @@
+from common.Opcodes import *
+from Exceptions import CPUStateError
 
 class CPUState(object):
 	def __init__(self):
@@ -58,11 +60,38 @@ class CPUState(object):
 		return (self.Flags & (1<<1)) != 0
 
 	def decrementStackPointer(self):
-		self.SS -= 1
-		self.SS &= 0xFFFFFFFF
+		self.SP -= 1
+		self.SP &= 0xFFFFFFFF
 
 	def incrementStackPointer(self):
-		self.SS += 1
-		self.SS &= 0xFFFFFFFF
+		self.SP += 1
+		self.SP &= 0xFFFFFFFF
+
+	def getSpecialRegister(self, index):
+		if index < 0 or index > len(SPECIALREGS):
+			raise CPUStateError("Special Register index out of bounds")
+
+		if index == SPECIALREG_SEGTBL:
+			pass
+		elif index == SPECIALREG_VMTBL:
+			pass
+		elif index == SPECIALREG_STACKPTR:
+			return self.SP
+		else:
+			raise CPUStateError("Don't know how to handle special register index - this is a bug!")
+		
+
+	def setSpecialRegister(self, index, value):
+		if index < 0 or index > len(SPECIALREGS):
+			raise CPUStateError("Special Register index out of bounds")
+
+		if index == SPECIALREG_SEGTBL:
+			pass
+		elif index == SPECIALREG_VMTBL:
+			pass
+		elif index == SPECIALREG_STACKPTR:
+			self.SP = value
+		else:
+			raise CPUStateError("Don't know how to handle special register index - this is a bug!")
 
 	#TODO: get string reprensation for printing the regs
