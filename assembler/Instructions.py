@@ -317,7 +317,7 @@ def assembleInstruction(name, args, addr, symtab, defines, privilegeLevel):
 def _parseAgumentType(arg, symtab, deftab):
 	#The argument is a symbolic name
 	if isinstance(arg, Register):
-		if arg.reg > 30:
+		if arg.reg > 31:
 			raise InstructionError("Invalid register 'r%s'" % arg.reg)
 
 		return (PARAM_REGISTER << 5 | arg.reg, None, None, None)
