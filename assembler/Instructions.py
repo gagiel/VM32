@@ -339,6 +339,15 @@ def _parseAgumentType(arg, symtab, deftab):
 
 			regOffset = arg.offset.reg
 
+		#if memory address is a number, handle this here
+		if isinstance(arg.id, Number):
+			if arg.segment == 'ds':
+				return (PARAM_MEMORY_SINGLE_DS << 5 | regOffset, arg.id.val, None, None)
+			elif arg.segment == 'es':
+				return (PARAM_MEMORY_SINGLE_ES << 5 | regOffset, arg.id.val, None, None)
+			else:
+				raise Exception("Unknown memory segment: %s" % arg.segment)
+
 		#check if operand is a define
 		#if so, take it, and return, otherwise check for local symbols and registers or import it
 		if deftab.has_key(arg.id.id):
@@ -379,6 +388,15 @@ def _parseAgumentType(arg, symtab, deftab):
 				raise InstructionError("Invalid register 'r%s'" % arg.offset.reg)
 
 			regOffset = arg.offset.reg
+
+		#if memory address is a number, handle this here
+		if isinstance(arg.id, Number):
+			if arg.segment == 'ds':
+				return (PARAM_MEMORY_SINGLE_DS << 5 | regOffset, arg.id.val, None, None)
+			elif arg.segment == 'es':
+				return (PARAM_MEMORY_SINGLE_ES << 5 | regOffset, arg.id.val, None, None)
+			else:
+				raise Exception("Unknown memory segment: %s" % arg.segment)
 
 		#check if operand is a define
 		#if so, take it, and return, otherwise check for local symbols and registers or import it

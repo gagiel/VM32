@@ -132,44 +132,53 @@ class Parser(object):
 		p[0] = p[1]
 
 	def p_argument_6(self, p):
-		''' argument    : LPAREN ID RPAREN
+		''' argument    : LPAREN numorid RPAREN
 		'''
-		p[0] = MemRef(offset=None, id=Id(p[2]), segment="ds")
+		p[0] = MemRef(offset=None, id=p[2], segment="ds")
 
 	def p_argument_7(self, p):
-		''' argument    : LSQBRACKET ID RSQBRACKET
+		''' argument    : LSQBRACKET numorid RSQBRACKET
 		'''
-		p[0] = DoubleMemRef(offset=None, id=Id(p[2]), segment="ds")
+		p[0] = DoubleMemRef(offset=None, id=p[2], segment="ds")
 
 	def p_argument_8(self, p):
-		''' argument    : REGISTER LPAREN ID RPAREN
+		''' argument    : REGISTER LPAREN numorid RPAREN
 		'''
-		p[0] = MemRef(offset=Register(p[1]), id=Id(p[3]), segment="ds")
+		p[0] = MemRef(offset=Register(p[1]), id=p[3], segment="ds")
 
 	def p_argument_9(self, p):
-		''' argument    : REGISTER LSQBRACKET ID RSQBRACKET
+		''' argument    : REGISTER LSQBRACKET numorid RSQBRACKET
 		'''
-		p[0] = DoubleMemRef(offset=Register(p[1]), id=Id(p[3]), segment="ds")
+		p[0] = DoubleMemRef(offset=Register(p[1]), id=p[3], segment="ds")
 
 	def p_argument_10(self, p):
-		''' argument    : ID COLON REGISTER LPAREN ID RPAREN
+		''' argument    : ID COLON REGISTER LPAREN numorid RPAREN
 		'''
-		p[0] = MemRef(offset=Register(p[3]), id=Id(p[5]), segment=p[1])
+		p[0] = MemRef(offset=Register(p[3]), id=p[5], segment=p[1])
 
 	def p_argument_11(self, p):
-		''' argument    : ID COLON REGISTER LSQBRACKET ID RSQBRACKET
+		''' argument    : ID COLON REGISTER LSQBRACKET numorid RSQBRACKET
 		'''
-		p[0] = DoubleMemRef(offset=Register(p[3]), id=Id(p[5]), segment=p[1])
+		p[0] = DoubleMemRef(offset=Register(p[3]), id=p[5], segment=p[1])
 
 	def p_argument_12(self, p):
-		''' argument    : ID COLON LPAREN ID RPAREN
+		''' argument    : ID COLON LPAREN numorid RPAREN
 		'''
-		p[0] = MemRef(offset=None, id=Id(p[4]), segment=p[1])
+		p[0] = MemRef(offset=None, id=p[4], segment=p[1])
 
 	def p_argument_13(self, p):
-		''' argument    : ID COLON LSQBRACKET ID RSQBRACKET
+		''' argument    : ID COLON LSQBRACKET numorid RSQBRACKET
 		'''
-		p[0] = DoubleMemRef(offset=None, id=Id(p[4]), segment=p[1])
+		p[0] = DoubleMemRef(offset=None, id=p[4], segment=p[1])
+
+	def p_memref_arg_num_or_id(self, p):
+		''' numorid  : number
+						| ID
+		'''
+		if isinstance(p[1], Number):
+			p[0] = p[1]
+		else:
+			p[0] = Id(p[1])
 
 	def p_number(self, p):
 		''' number  : DEC

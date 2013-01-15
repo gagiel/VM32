@@ -2,8 +2,6 @@
 .privLvl 0
 .GLOBAL startup
 
-.define NULL, 0
-
 startup:
 	MOV CR_STACKPTR, 0x1000
 
@@ -33,9 +31,9 @@ end_mem:
 printWithRegisters:
 	MOV r0, sayHello
 next_reg:
-	CMP r0(NULL), 0
+	CMP r0(0), 0
 	JZ end_reg
-	PRINT r0(NULL)
+	PRINT r0(0)
 	ADD r0, 1
 	JMP next_reg
 end_reg:
