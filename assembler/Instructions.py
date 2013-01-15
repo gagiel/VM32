@@ -1,7 +1,7 @@
 import struct
 
 from common.Opcodes import *
-from Parser import Number, Id, String, MemRef, DoubleMemRef, Instruction, Directive, LabelDef, Register
+from Parser import Number, Id, String, MemRef, DoubleMemRef, Instruction, Directive, LabelDef, Register, SpecialRegister
 from Exceptions import InstructionError
 
 from ObjectFile import ImportEntry, RelocEntry
@@ -91,8 +91,8 @@ _INSTR = {
 		'nargs': 2,
 		'op': OP_MOV,
 		'paramtypes': [
-			[Register, MemRef, DoubleMemRef, PARAM_SPECIAL_REGISTER],
-			[Id, Register, Number, MemRef, DoubleMemRef, PARAM_SPECIAL_REGISTER],
+			[Register, MemRef, DoubleMemRef, SpecialRegister],
+			[Id, Register, Number, MemRef, DoubleMemRef, SpecialRegister],
 		]
 	},
 
@@ -321,6 +321,13 @@ def _parseAgumentType(arg, symtab, deftab):
 			raise InstructionError("Invalid register 'r%s'" % arg.reg)
 
 		return (PARAM_REGISTER << 5 | arg.reg, None, None, None)
+
+	if isinstance(arg, SpecialRegister):
+		if not arg.reg in SPECIALREGS:
+			raise InstructionError("Invalid special register '%s'" % arg.reg)
+
+		return (PARAM_SPECIAL_REGISTER << 5 | SPECIALREGS[arg.reg], None, None, None)
+
 	if isinstance(arg, Id):
 		#check if labelname of the MemRef is a define
 		#if so, take it, and return, otherwise check for symbols or import it

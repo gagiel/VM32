@@ -18,7 +18,7 @@ class Lexer(object):
 		self.lexer.lineno = 1
 
 	tokens = (
-		'ID', 'DIRECTIVE', 'REGISTER',
+		'ID', 'DIRECTIVE', 'REGISTER', 'SPECIALREGISTER',
 		'DEC', 'HEX', 'STRING',
 		'COLON', 'COMMA', 'RPAREN', 'LPAREN',
 		'LSQBRACKET', 'RSQBRACKET',
@@ -38,8 +38,13 @@ class Lexer(object):
 	#and the following chars may be alphanumeric or _
 	#at least one character long
 	def t_REGISTER(self, t):
-		r'[r|R][0-9]+'
+		r'(r|R)[0-9]+'
 		t.value = int(t.value.lower()[1:])
+		return t
+
+	def t_SPECIALREGISTER(self, t):
+		r'(cr_|CR_)[a-zA-Z]+'
+		t.value = t.value.lower()[3:]
 		return t
 
 	def t_ID(self, t):
