@@ -26,7 +26,7 @@ class CPU(object):
 		self.reset()
 
 	def reset(self):
-		self.state.reset()
+		self.state.reset(self.memory)
 
 	def doSimulationStep(self):
 		#todo check if pc can be fetched from the resulting address
@@ -44,7 +44,7 @@ class CPU(object):
 
 		if not doesInstructionExist(opcode):
 			#TODO raise cpu exception, remove error-log
-			self.logger.error("Unknown instruction")
+			self.logger.error("Unknown instruction at 0x%x" % self.state.getResultingInstructionAddress())
 			return False
 
 		#TODO check if argument types are even possible for this instruction
@@ -69,13 +69,13 @@ class CPU(object):
 				ipadd += 1
 
 			elif operandType1 == Opcodes.PARAM_REGISTER:
-				print "Op1: PARAM_REGISTER"
-				#TODO: implement
-				pass
+				operand1 = self.state.getRegister(registerOperand1)
+				writebackFunction = lambda val: self.state.setRegister(registerOperand1, val)
 
 			elif operandType1 == Opcodes.PARAM_MEMORY_SINGLE_DS:
 				operand1addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
 				operand1addr = self.state.getResultingDataAddress(operand1addr)
+				if registerOperand1 != 31: operand1addr += self.state.getRegister(registerOperand1);
 				operand1 = self.memory.readWord(operand1addr)
 				writebackFunction = lambda val: self.memory.writeWord(operand1addr, val)
 				ipadd += 1
@@ -83,6 +83,7 @@ class CPU(object):
 			elif operandType1 == Opcodes.PARAM_MEMORY_SINGLE_ES:
 				operand1addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
 				operand1addr = self.state.getResultingExtraAddress(operand1addr)
+				if registerOperand1 != 31: operand1addr += self.state.getRegister(registerOperand1)
 				operand1 = self.memory.readWord(operand1addr)
 				writebackFunction = lambda val: self.memory.writeWord(operand1addr, val)
 				ipadd += 1
@@ -91,6 +92,7 @@ class CPU(object):
 				operand1addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
 				operand1addr = self.memory.readWord(self.state.getResultingDataAddress(operand1addr))
 				operand1addr = self.state.getResultingDataAddress(operand1addr);
+				if registerOperand1 != 31: operand1addr += self.state.getRegister(registerOperand1)
 				operand1 = self.memory.readWord(operand1addr)
 				writebackFunction = lambda val: self.memory.writeWord(operand1addr, val)
 				ipadd += 1
@@ -99,12 +101,12 @@ class CPU(object):
 				operand1addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
 				operand1addr = self.memory.readWord(self.state.getResultingExtraAddress(operand1addr))
 				operand1addr = self.state.getResultingExtraAddress(operand1addr)
+				if registerOperand1 != 31: operand1addr += self.state.getRegister(registerOperand1)
 				operand1 = self.memory.readWord(operand1addr)
 				writebackFunction = lambda val: self.memory.writeWord(operand1addr, val)
 				ipadd += 1
 
 			elif operandType1 == Opcodes.PARAM_SPECIAL_REGISTER:
-				print "Op1: PARAM_SPECIAL_REGISTER"
 				operand1 = self.state.getSpecialRegister(registerOperand1)
 				writebackFunction = lambda val: self.state.setSpecialRegister(registerOperand1, val)
 
@@ -118,28 +120,31 @@ class CPU(object):
 				ipadd += 1
 
 			elif operandType2 == Opcodes.PARAM_REGISTER:
-				#TODO: implement
-				pass
+				operand2 = self.state.setRegister(registerOperand2)
 
 			elif operandType2 == Opcodes.PARAM_MEMORY_SINGLE_DS:
 				operand2addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
+				if registerOperand2 != 31: operand2addr += self.state.getRegister(registerOperand2)
 				operand2 = self.memory.readWord(self.state.getResultingDataAddress(operand2addr))
 				ipadd += 1
 
 			elif operandType2 == Opcodes.PARAM_MEMORY_SINGLE_ES:
 				operand2addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
+				if registerOperand2 != 31: operand2addr += self.state.getRegister(registerOperand2)
 				operand2 = self.memory.readWord(self.state.getResultingExtraAddress(operand2addr))
 				ipadd += 1
 
 			elif operandType2 == Opcodes.PARAM_MEMORY_DOUBLE_DS:
 				operand2addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
 				operand2addr = self.memory.readWord(self.state.getResultingDataAddress(operand2addr))
+				if registerOperand2 != 31: operand2addr += self.state.getRegister(registerOperand2)
 				operand2 = self.memory.readWord(self.state.getResultingDataAddress(operand2addr))
 				ipadd += 1
 
 			elif operandType2 == Opcodes.PARAM_MEMORY_DOUBLE_ES:
 				operand2addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
 				operand2addr = self.memory.readWord(self.state.getResultingExtraAddress(operand2addr))
+				if registerOperand2 != 31: operand2addr += self.state.getRegister(registerOperand2)
 				operand2 = self.memory.readWord(self.state.getResultingExtraAddress(operand2addr))
 				ipadd += 1
 

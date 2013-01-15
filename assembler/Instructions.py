@@ -293,31 +293,13 @@ def assembleInstruction(name, args, addr, symtab, defines, privilegeLevel):
 	#append argument values
 	assembled.extend(map(lambda x: struct.pack("<I", x), operandValues))
 
-	# if instr['nargs'] == 0:
-	# 	assembled = [
-	# 		struct.pack("<BBBB", instr["op"], privilegeLevel, 0, 0)
-	# 	]
-	# elif instr['nargs'] == 1:
-	# 	assembled = [
-	# 		struct.pack("<BBBB", instr["op"], privilegeLevel, operandTypes[0], 0),
-	# 		struct.pack("<I", operandValues[0])
-	# 	]
-	# elif instr['nargs'] == 2:
-	# 	assembled = [
-	# 		struct.pack("<BBBB", instr["op"], privilegeLevel, operandTypes[0], operandTypes[1]),
-	# 		struct.pack("<I", operandValues[0]),
-	# 		struct.pack("<I", operandValues[1])
-	# 	]
-	# else:
-	# 	raise InstructionError("Instruction seems to need more than 2 arguments. This is an internal error in the assembler")
-
 	#put everything into a container object and return it for further processing
 	return AssembledInstruction(op=assembled, import_req=importedSymbols, reloc_req=relocations)
 
 def _parseAgumentType(arg, symtab, deftab):
 	#The argument is a symbolic name
 	if isinstance(arg, Register):
-		if arg.reg > 31:
+		if arg.reg > 30:
 			raise InstructionError("Invalid register 'r%s'" % arg.reg)
 
 		return (PARAM_REGISTER << 5 | arg.reg, None, None, None)
@@ -336,7 +318,7 @@ def _parseAgumentType(arg, symtab, deftab):
 
 		#check if labelname of the MemRef is locally defined
 		#if it is, then we don't have an external symbol, but a relocation
-		#otherwise we have a relocation
+		#otherwise we have an import
 		if arg.id in symtab:
 			return (PARAM_IMMEDIATE << 5, symtab[arg.id].offset, None, symtab[arg.id].segment)
 		else:
@@ -360,7 +342,7 @@ def _parseAgumentType(arg, symtab, deftab):
 
 		#check if labelname of the MemRef is locally defined
 		#if it is, then we don't have an external symbol, but a relocation
-		#otherwise we have a relocation
+		#otherwise we have an import
 		if arg.id.id in symtab:
 			offset = symtab[arg.id.id].offset
 			externdefinedSymbol = None
@@ -400,7 +382,7 @@ def _parseAgumentType(arg, symtab, deftab):
 
 		#check if labelname of the MemRef is locally defined
 		#if it is, then we don't have an external symbol, but a relocation
-		#otherwise we have a relocation
+		#otherwise we have an import
 		if arg.id.id in symtab:
 			offset = symtab[arg.id.id].offset
 			externdefinedSymbol = None

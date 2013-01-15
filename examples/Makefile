@@ -7,10 +7,10 @@ LD := ../link.py
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(LD) -o $@ $^
+	$(LD) -d -o $@ $^
 
 %.obj: %.vm32
-	$(AS) -o $@ $<
+	$(AS) -d -o $@ $<
 
 clean:
 	rm -f *.obj *.bin

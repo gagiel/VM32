@@ -2,33 +2,46 @@
 .privLvl 0
 .GLOBAL startup
 
-.define CHAR, 0x41
-.define LOCATION, 0x1000
+.define NULL, 0
 
 startup:
-	PUSH CHAR
-	POP (LOCATION)
-	PRINT (LOCATION)
+	MOV CR_STACKPTR, 0x1000
 
-	CALL someFunction
-
-	MOV (strPtr), sayHello
-#	MOV (counter), 0
-
-next:
-	CMP [strPtr], 0
-	JZ end
-	PRINT [strPtr]
-	ADD (strPtr), 1
-	JMP next
+	CALL printWithMemory
+	CALL printWithRegisters
 
 end:
 	HALT
 	JMP end
 
-someFunction:
-	PRINT (sayHello)
+
+##########################################
+
+printWithMemory:
+	MOV (strPtr), sayHello
+next_mem:
+	CMP [strPtr], 0
+	JZ end_mem
+	PRINT [strPtr]
+	ADD (strPtr), 1
+	JMP next_mem
+end_mem:
 	RET
+
+##########################################
+
+printWithRegisters:
+	MOV r0, sayHello
+next_reg:
+	CMP r0(NULL), 0
+	JZ end_reg
+	PRINT r0(NULL)
+	ADD r0, 1
+	JMP next_reg
+end_reg:
+	RET
+
+##########################################
 
 .SEGMENT data
 sayHello:
@@ -36,5 +49,3 @@ sayHello:
 
 strPtr:
 	.alloc 1
-#counter:
-#	.alloc 1

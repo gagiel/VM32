@@ -132,18 +132,22 @@ class Assembler(object):
 					offset = len(seg_data[addr.segment])
 					
 					#add reported imports to import table
-					for i, importedSymbol in enumerate(instruction.import_req):
+					i = 0
+					for importedSymbol in instruction.import_req:
 						if importedSymbol != None:
 							import_table.append(ImportEntry(
 								import_symbol=importedSymbol,
 								addr=SegAddr(addr.segment, offset+1+i)))
+							i+=1
 
 					#add reported relocations to relocation table
-					for i, segment in enumerate(instruction.reloc_req):
+					i = 0
+					for segment in instruction.reloc_req:
 						if segment != None:
 							reloc_table.append(RelocEntry(
 								reloc_segment=segment,
 								addr=SegAddr(addr.segment, offset+1+i)))
+							i+=1
 
 					#add instruction to current segment
 					seg_data[addr.segment].extend(list(instruction.op))
