@@ -3,7 +3,15 @@
 .GLOBAL startup
 
 startup:
-	MOV CR_STACKPTR, 0x1000
+	MOV CR_CS, 0
+	MOV CR_DS, 1
+	MOV CR_ES, 1
+	MOV CR_RS, 2
+	MOV CR_SS, 3
+
+	MOV CR_STACKPTR, 512
+
+	MOV CR_SEGTBL, segementationTable
 
 	CALL printWithMemory
 	CALL printWithRegisters
@@ -16,7 +24,7 @@ end:
 ##########################################
 
 printWithMemory:
-	MOV (strPtr), sayHello
+	MOV (strPtr), 0		#address is segment relative to DS
 next_mem:
 	CMP [strPtr], 0
 	JZ end_mem
@@ -29,7 +37,7 @@ end_mem:
 ##########################################
 
 printWithRegisters:
-	MOV r0, sayHello
+	MOV r0, 0			#address is segment relative to DS
 next_reg:
 	CMP r0(0), 0
 	JZ end_reg
@@ -39,11 +47,51 @@ next_reg:
 end_reg:
 	RET
 
+
+codeEnd:
+
 ##########################################
 
 .SEGMENT data
+startOfData:
+
 sayHello:
 	.string "Hello, World!\n"
 
 strPtr:
 	.alloc 1
+
+
+
+segementationTable:
+#        Start               Limit           Type      PrivLvl
+#CS
+.word    InterruptVectors,   codeEnd,        0,        0
+
+#DS
+.word    startOfData,        endOfData,      1,        0
+
+#DS
+.word    startOfRegisters,   endOfRegisters, 2,        0
+
+#DS
+.word    startOfStack,       endOfStack,     3,        0
+
+#END
+.word    0,                  0,              0,        0
+
+endOfData:
+
+##########################################
+
+.SEGMENT registers
+startOfRegisters:
+.alloc 31
+endOfRegisters:
+
+##########################################
+
+.SEGMENT stack
+startOfStack:
+.alloc 512
+endOfStack:

@@ -189,11 +189,27 @@ class Assembler(object):
 					data = []
 
 					for i, word_arg in enumerate(line.args):
+						print i
+						print word_arg
+
 						if isinstance(word_arg, Number):
 							try:
 								data.extend([struct.pack("<I", word_arg.val)])
 							except:
 								self._assembly_error(".word -- argument %s is not a valid 32 bit word" % (i + 1,), line.lineno)
+						elif isinstance(word_arg, Id):
+							if word_arg.id in defines:
+								data.extend([struct.pack("<I", defines[word_arg.id])])
+							elif word_arg.id in symtab:
+								data.extend([struct.pack("<I", symtab[word_arg.id].offset)])
+								reloc_table.append(RelocEntry(
+									reloc_segment=symtab[word_arg.id].segment,
+									addr=SegAddr(addr.segment, len(seg_data[addr.segment]) + i)))
+							else:
+								data.extend([struct.pack("<I", 0)])
+								import_table.append(ImportEntry(
+									import_symbol=word_arg.id,
+									addr=SegAddr(addr.segment, len(seg_data[addr.segment]) + i)))
 						else:
 							self._assembly_error(".word -- argument %s is not a valid word" % (i + 1,), line.lineno)
 
