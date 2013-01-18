@@ -189,9 +189,6 @@ class Assembler(object):
 					data = []
 
 					for i, word_arg in enumerate(line.args):
-						print i
-						print word_arg
-
 						if isinstance(word_arg, Number):
 							try:
 								data.extend([struct.pack("<I", word_arg.val)])
