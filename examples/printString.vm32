@@ -16,6 +16,11 @@ startup:
 	CALL printWithMemory
 	CALL printWithRegisters
 
+	INT 0
+
+	MOV r1, 1234
+	DIV r1, 0
+
 end:
 	HALT
 	JMP end

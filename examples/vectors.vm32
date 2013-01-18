@@ -18,7 +18,7 @@ vec_invalidOpcode:
 
 #0x03
 vec_divisionByZero:
-	JMP vec_divisionByZero
+	JMP divByZero
 
 #0x04
 vec_hypervisorTrap:
@@ -28,31 +28,119 @@ vec_hypervisorTrap:
 vec_timerInterrupt:
 	JMP vec_timerInterrupt
 
+
+
 #0x06-0x20
 vec_softwareStart:
+	JMP testInterrupt
+
+#INT 1
 	NOP
 	NOP
+
+#INT 2
 	NOP
 	NOP
+
+#INT 3
 	NOP
 	NOP
+
+#INT 4
 	NOP
 	NOP
+
+#INT 5
 	NOP
 	NOP
+
+#INT 6
 	NOP
 	NOP
+
+#INT 7
 	NOP
 	NOP
+
+#INT 8
 	NOP
 	NOP
+
+#INT 9
 	NOP
 	NOP
+
+#INT 10
 	NOP
 	NOP
+
+#INT 11
 	NOP
 	NOP
+
+#INT 12
 	NOP
 	NOP
+
+#INT 13
+	NOP
+	NOP
+
+#INT 14
+	NOP
+	NOP
+
+#INT 15
+	NOP
+	NOP
+
+#INT 16
+	NOP
+	NOP
+
+#INT 17
+	NOP
+	NOP
+
+#INT 18
+	NOP
+	NOP
+
+#INT 19
+	NOP
+	NOP
+
+#INT 20
+	NOP
+	NOP
+
+#INT 21
+	NOP
+	NOP
+
+#INT 22
+	NOP
+	NOP
+
+#INT 23
+	NOP
+	NOP
+
+#INT 24
+	NOP
+	NOP
+
+#INT 25
+	NOP
+	NOP
+
 hang:
 	JMP hang
+
+divByZero:
+	PRINT 0x41
+	JMP hang
+
+testInterrupt:
+	PRINT 0x42
+	RETI

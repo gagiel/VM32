@@ -1,5 +1,6 @@
 from .CPUState import CPUState
 from .Memory import Memory
+from .Exceptions import SimulatorError
 
 from common import Opcodes
 
@@ -8,15 +9,6 @@ import logging
 import sys
 
 from .Instructions import doesInstructionExist, getArgumentCount
-
-#Interrupt types
-INTR_RESET = 0
-INTR_SEG_VIOL = 1
-INTR_INVALID_INSTR = 2
-INTR_DIV_BY_ZERO = 3
-INTR_HV_TRAP = 4
-INTR_TIMTER = 5
-INTR_SOFTWARE = 6
 
 class CPU(object):
 	def __init__(self, memoryString):
@@ -180,8 +172,9 @@ class CPU(object):
 		elif opcode == Opcodes.OP_DIV:
 			#print "Opcodes.OP_DIV"
 			if operand2 == 0:
-				#TODO raise cpu exception
-				pass
+				self.raiseInterrupt(Opcodes.INTR_DIV_BY_ZERO * 2, self.state.IP)
+				return True
+
 			writebackValue = (operand1 / operand2) & 0xFFFFFFFF
 
 		#MOD
@@ -244,7 +237,7 @@ class CPU(object):
 
 		#JMP
 		elif opcode == Opcodes.OP_JMP:
-			#print "Opcodes.OP_JMP"
+			#print "Opcodes.OP_JMP to 0x%x" % operand1
 			self.state.IP = operand1
 			return True
 
@@ -301,11 +294,13 @@ class CPU(object):
 
 		#INT
 		elif opcode == Opcodes.OP_INT:
-			print "Opcodes.OP_INT"
+			self.raiseInterrupt((operand1 + Opcodes.INTR_SOFTWARE) * 2, self.state.IP + ipadd)
+			return True
 
 		#RETI
 		elif opcode == Opcodes.OP_RETI:
-			print "Opcodes.OP_RETI"
+			self.state.IP = self.popFromStack()
+			return True
 
 		#VMRESUME
 		elif opcode == Opcodes.OP_VMRESUME:
@@ -341,5 +336,14 @@ class CPU(object):
 		self.state.incrementStackPointer()
 		return stackValue
 
-	def raiseInterrupt(self):
-		return
+
+	def raiseInterrupt(self, interruptNumber, returnIp):
+		if interruptNumber > 32:
+			raise SimulatorError("Interrupt number is out of bounds")
+
+		if not self.state.InVM:
+			self.pushToStack(returnIp)
+			self.state.IP = self.state.getResultingCodeAddress(interruptNumber)
+		else:
+			#TODO restore HV context via vmtbl and raise hypervisor trap
+			raise Exception("interrupt in VM not implemented")

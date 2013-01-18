@@ -30,7 +30,9 @@ class CPUState(object):
 		self.VmTbl = 0
 		self.SegTbl = 0
 
+		self.InVM = False
 		#self.VmID = 0
+
 		self.privLvl = 0
 
 		self.segments = []
@@ -42,6 +44,12 @@ class CPUState(object):
 			return self.IP
 		else:
 			return self.segments[self.CS].start + self.IP
+
+	def getResultingCodeAddress(self, offset):
+		if len(self.segments) == 0:
+			return offset
+		else:
+			return self.segments[self.CS].start + offset
 
 	def getResultingDataAddress(self, offset):
 		if len(self.segments) == 0:
