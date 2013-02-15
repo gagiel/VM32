@@ -8,7 +8,7 @@ import struct
 import logging
 import sys
 
-from .Instructions import doesInstructionExist, getArgumentCount
+from .Instructions import doesInstructionExist, getArgumentCount, areParametersValid
 
 class CPU(object):
 	def __init__(self, memoryString):
@@ -34,12 +34,17 @@ class CPU(object):
 		registerOperand2 = operandType2 & 0x1F
 		operandType2 = operandType2 >> 5
 
+		#check wether instruction itself exists and raise exception if not
 		if not doesInstructionExist(opcode):
-			#TODO raise cpu exception, remove error-log
-			self.logger.error("Unknown instruction at 0x%x" % self.state.getResultingInstructionAddress())
-			return False
+			self.logger.debug("Unknown instruction at physical 0x%x", self.state.getResultingInstructionAddress())
+			self.raiseInterrupt(Opcodes.INTR_INVALID_INSTR * 2, self.state.IP)
+			return True
 
-		#TODO check if argument types are even possible for this instruction
+		#check wether the operand types encoded in the instruction word are valid for the given opcode and raise exception if not
+		if not areParametersValid(opcode, operandType1, operandType2):
+			self.logger.debug("Invalid parameter type for instruction 0x%x at physical 0x%x", opcode, self.state.getResultingInstructionAddress())
+			self.raiseInterrupt(Opcodes.INTR_INVALID_INSTR * 2, self.state.IP)
+			return True
 
 		if privlvl < self.state.privLvl:
 			#TODO raise cpu exception
@@ -55,6 +60,7 @@ class CPU(object):
 		writebackValue = None
 		writebackFunction = None
 
+		#decode first operand type, fetch it and prepare a writeback closure
 		if argumentCount > 0:
 			if operandType1 == Opcodes.PARAM_IMMEDIATE:
 				operand1 = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
@@ -106,6 +112,7 @@ class CPU(object):
 				self.logger.error("Unknown operand type for operand 1: %x", operandType1)
 				return False
 		
+		#decode second operand type, fetch it and prepare a writeback closure
 		if argumentCount > 1:
 			if operandType2 == Opcodes.PARAM_IMMEDIATE:
 				operand2 = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
@@ -148,9 +155,9 @@ class CPU(object):
 				return False
 
 
-		#TODO: parse args
-		#TODO: check args for validity
 		#TODO: if memory is involved, check segment violations
+
+		#handle opcode
 
 		#ADD
 		if opcode == Opcodes.OP_ADD:
@@ -172,6 +179,7 @@ class CPU(object):
 		elif opcode == Opcodes.OP_DIV:
 			#print "Opcodes.OP_DIV"
 			if operand2 == 0:
+				self.logger.debug("Division by zero occured at physical 0x%x", self.state.getResultingInstructionAddress())
 				self.raiseInterrupt(Opcodes.INTR_DIV_BY_ZERO * 2, self.state.IP)
 				return True
 
@@ -312,6 +320,7 @@ class CPU(object):
 			return False
 
 
+		#perform writeback if necessary
 		if writebackValue != None:
 			if argumentCount == 0:
 				self.logger.error("Internal simulator error: Can't do writeback on 0-operand instructions")
@@ -323,6 +332,7 @@ class CPU(object):
 
 			writebackFunction(writebackValue)
 
+		#advance instruction pointer
 		self.state.IP += ipadd
 
 		return True

@@ -206,3 +206,15 @@ def doesInstructionExist(opcode):
 def getArgumentCount(opcode):
 	#TODO throw exception if unknown opcode
 	return _INSTR[opcode]['nargs']
+
+def areParametersValid(opcode, operandType1, operandType2):
+	if not opcode in _INSTR:
+		return False
+
+	if len(_INSTR[opcode]['paramtypes']) > 0 and not operandType1 in _INSTR[opcode]['paramtypes'][0]:
+		return False
+
+	if len(_INSTR[opcode]['paramtypes']) > 1 and not operandType2 in _INSTR[opcode]['paramtypes'][1]:
+		return False
+
+	return True
