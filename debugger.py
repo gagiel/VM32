@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 
 import sys
+import os
 import argparse
 import logging
 import struct
+import cmd
 
 from simulator.CPU import CPU
 from utils.Disassembler import Disassembler
-
-disassembler = Disassembler()
-breakpoints = []
 
 def main(argc, argv):
 	parser = argparse.ArgumentParser(description='VM32 Debuuger')
@@ -27,31 +26,159 @@ def main(argc, argv):
 
 	cpu = CPU(arguments.memoryImage.read())
 
+	#history stuff, if it fails don't worry and carry on
 	try:
+		historyPath = os.path.expanduser("~/.vm32history")
+
 		import readline
-		readline.parse_and_bind("tab: complete")
-		readline.set_completer(lambda text, state: commands.keys()[state])
-	except:
-		print "Readline support not available"
+		def save_history(historyPath=historyPath):
+			readline.write_history_file(historyPath)
 
-	lastCommand = None
-	try:
-		while True:
-			line = raw_input('VM32> ')
-			if line == "" and lastCommand == None:
-				continue
-			elif line != "":
-				args = line.split(" ")
-				lastCommand = args
-				executeCommand(cpu, args)
+		if os.path.exists(historyPath):
+			readline.read_history_file(historyPath)
+
+		import atexit
+		atexit.register(save_history)
+	except Exception:
+		print "GNU readline support not available"
+
+	DebuggerShell(cpu).cmdloop()
+
+disassembler = Disassembler()
+
+class DebuggerShell(cmd.Cmd):
+	def __init__(self, cpu):
+		cmd.Cmd.__init__(self)
+		self.cpu = cpu
+		self.prompt = "VM32> "
+		self.breakpoints = []
+
+	def do_del(self, line):
+		try:
+			index = parseArgs(line)[0]
+			if index < len(self.breakpoints):
+				self.breakpoints.pop(index)
 			else:
-				executeCommand(cpu, lastCommand)
+				print "Argument out of bounds"
+		except (ValueError, IndexError):
+			print "Argument parsing failed"
 
-	except (KeyboardInterrupt, EOFError):
-		sys.exit(0)
+	def do_break(self, line):
+		try:
+			addr = parseArgs(line)[0]
+			self.breakpoints.append(addr)
+		except (ValueError, IndexError):
+			print "Argument parsing failed"
 
-	#while cpu.doSimulationStep():
-	#	pass
+	def do_list(self, line):
+		if len(self.breakpoints) == 0:
+			print "No breakpoints"
+		else:
+			for (idx, bp) in enumerate(self.breakpoints):
+				print "%d - 0x%x" % (idx, bp)
+
+	def do_read(self, line):
+		try:
+			args = parseArgs(line)
+			addr = args[0]
+			length = 1
+			if len(args) > 1:
+				length = args[1]
+
+			for i in range(length):
+				sys.stdout.write("%08x " % self.cpu.memory.readWord(addr + i))
+				
+				if (i+1) % 4 == 0:
+					print ""
+
+			print ""
+
+		except (ValueError, IndexError):
+			print "Argument parsing failed"
+
+	def do_write(self, line):
+		try:
+			args = parseArgs(line)
+			addr = args[0]
+			val = args[1]
+			self.cpu.memory.writeWord(addr, val)
+
+		except (ValueError, IndexError):
+			print "Argument parsing failed"
+
+	def do_stack(self, line):
+		#FIXME: this is totally hacked
+		try:
+			addr = hex(self.cpu.state.SP)
+			val = parseArgs(line)[0]
+			self.do_read(addr + " " + str(val))
+		except (ValueError, IndexError):
+			print "Argument parsing failed"
+
+	def do_reg(self, line):
+		print self.cpu.state.getStringRepresentation()
+
+	def do_step(self, line):
+		if not self.cpu.doSimulationStep():
+			print "CPU Simulation ended"
+			return
+
+		(text, consumedWords) = disassembleInstruction(self.cpu, self.cpu.state.IP)
+		print text
+
+	def do_disassemble(self, line):
+		try:
+			args = parseArgs(line)
+			addr = args[0]
+			count = 1
+			if len(args) > 1:
+				count = args[1]
+			
+			for i in range(count):
+				(text, consumedWords) = disassembleInstruction(self.cpu, addr)
+
+				print text
+				addr += consumedWords
+
+		except (ValueError, IndexError):
+			print "Argument parsing failed"
+
+	def do_continue(self, line):
+		while True:
+			try:
+				if self.cpu.state.IP in self.breakpoints:
+					print "Breakpoint hit at 0x%08x" % self.cpu.state.IP
+					(text, consumedWords) = disassembleInstruction(self.cpu, self.cpu.state.IP)
+					print text
+					return
+
+				if not self.cpu.doSimulationStep():
+					print "CPU Simulation ended"
+					return
+			except KeyboardInterrupt:
+				print "Breaking at 0x%08x" % self.cpu.state.IP
+				return
+
+	def do_reset(self, line):
+		print "Resetting CPU"
+		self.cpu.reset()
+
+	def do_quit(self, line):
+		return True
+
+	def do_EOF(self, line):
+		return True
+
+def parseArgs(argstr):
+	return map(transformInt, argstr.split())
+
+def transformInt(str):
+	if str.startswith("0x"):
+		return int(str, 16)
+	elif len(str) > 1 and str.startswith("0"):
+		return int(str, 8)
+	else:
+		return int(str, 10)
 
 def disassembleInstruction(cpu, addr):
 	data = cpu.memory.readRangeBinary(addr, 3)
@@ -73,135 +200,6 @@ def disassembleInstruction(cpu, addr):
 	text += "\t" + disassembled
 
 	return (text, consumedWords)
-
-def executeCommand(cpu, args):
-	if not commands.has_key(args[0]):
-		print "Unknown command: %s" % args[0]
-		return
-
-	if commands[args[0]][0] > len(args[1:]):
-		print "Command %s expected %d arguments, %d supplied" % (args[0], commands[args[0]][0], len(args[1:]))
-		return
-
-	commands[args[0]][1](cpu, args[1:])
-
-def doStep(cpu, args):
-	if not cpu.doSimulationStep():
-		print "CPU Simulation ended"
-		return
-
-	(text, consumedWords) = disassembleInstruction(cpu, cpu.state.IP)
-	print text
-
-def doDisassemble(cpu, args):
-	try:
-		addr = int(args[0], 16)
-		count = int(args[1], 16)
-		
-		for i in range(count):
-			(text, consumedWords) = disassembleInstruction(cpu, addr)
-
-			print text
-			addr += consumedWords
-
-	except ValueError:
-		print "Argument was not hex addr"
-
-def doContinue(cpu, args):
-	while True:
-		try:
-			if cpu.state.IP in breakpoints:
-				print "Breakpoint hit at 0x%08x" % cpu.state.IP
-				(text, consumedWords) = disassembleInstruction(cpu, cpu.state.IP)
-				print text
-				return
-
-			if not cpu.doSimulationStep():
-				print "CPU Simulation ended"
-				return
-		except KeyboardInterrupt:
-			print "Breaking at 0x%08x" % cpu.state.IP
-			return
-
-def readMem(cpu, args):
-	try:
-		addr = int(args[0], 16)
-		length = 1
-		if len(args) > 1:
-			length = int(args[1], 16)
-
-		for i in range(length):
-			sys.stdout.write("%08x " % cpu.memory.readWord(addr + i))
-			
-			if (i+1) % 4 == 0:
-				print ""
-
-		print ""
-
-	except ValueError:
-		print "Argument was not hex addr"
-
-def writeMem(cpu, args):
-	try:
-		addr = int(args[0], 16)
-		val = int(args[1], 16)
-		cpu.memory.writeWord(addr, val)
-
-	except ValueError:
-		print "Argument was not hex addr"
-
-def dumpStack(cpu, args):
-	#FIXME: kind of hacky, but meh...
-	addr = hex(cpu.state.SP)
-	val = args[0]
-	readMem(cpu, [addr, val])
-
-def showRegs(cpu, args):
-	print cpu.state.getStringRepresentation()
-
-def quit(cpu, args):
-	sys.exit(0)
-
-def help(cpu, args):
-	for i in commands.iterkeys():
-		print "%s - %s - %d Arguments" % (i, commands[i][2], commands[i][0])
-
-def addBreakpoint(cpu, args):
-	try:
-		addr = int(args[0], 16)
-		breakpoints.append(addr)
-	except ValueError:
-		print "Argument was not hex addr"
-
-def listBreaks(cpu, args):
-	for (idx, bp) in enumerate(breakpoints):
-		print "%d - 0x%x" % (idx, bp)
-
-def delBreakpoint(cpu, args):
-	try:
-		index = int(args[0])
-		if index < len(breakpoints):
-			breakpoints.remove[index]
-		else:
-			print "Argument out of bounds"
-	except ValueError:
-		print "Argument not an int"
-
-commands = {
-	"continue": [0, doContinue, "Runs the "],
-	"break": [1, addBreakpoint, "Adds a breakpoint for physical address x in hex"],
-	"listBreaks": [0, listBreaks, "Lists all breakpoints"],
-	"delBreak": [1, delBreakpoint, "Removes breakpoint x"],
-	"step": [0, doStep, "Executes one simulation step"],
-	"disassemble": [2, doDisassemble, "Dissassemble from x on y instructions"],
-	"readMem": [1, readMem, "Reads memory"],
-	"writeMem": [2, writeMem, "Writes memory"],
-	"stack": [1, dumpStack, "Dumps n words from stack"],
-	"regs": [0, showRegs, "Shows registers"],
-	"quit": [0, quit, "Exits simulator"],
-	"help": [0, help, "Displays this text"],
-	"?": [0, help, "Displays this text"]
-}
 
 if __name__ == '__main__':
 	main(len(sys.argv), sys.argv)
