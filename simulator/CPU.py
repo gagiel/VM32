@@ -40,13 +40,13 @@ class CPU(object):
 
 		#check wether instruction itself exists and raise exception if not
 		if not doesInstructionExist(opcode):
-			self.logger.debug("Unknown instruction at physical 0x%x", self.state.getResultingInstructionAddress())
+			self.logger.debug("Unknown instruction at physical 0x%x", self.state.IP)
 			self.raiseInterrupt(Opcodes.INTR_INVALID_INSTR * 2, self.state.IP)
 			return True
 
 		#check wether the operand types encoded in the instruction word are valid for the given opcode and raise exception if not
 		if not areParametersValid(opcode, operandType1, operandType2):
-			self.logger.debug("Invalid parameter type for instruction 0x%x at physical 0x%x", opcode, self.state.getResultingInstructionAddress())
+			self.logger.debug("Invalid parameter type for instruction 0x%x at physical 0x%x", opcode, self.state.IP)
 			self.raiseInterrupt(Opcodes.INTR_INVALID_INSTR * 2, self.state.IP)
 			return True
 
@@ -66,99 +66,108 @@ class CPU(object):
 
 		#decode first operand type, fetch it and prepare a writeback closure
 		if argumentCount > 0:
-			if operandType1 == Opcodes.PARAM_IMMEDIATE:
-				operand1 = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
-				ipadd += 1
+			try:
+				if operandType1 == Opcodes.PARAM_IMMEDIATE:
+					operand1 = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
+					ipadd += 1
 
-			elif operandType1 == Opcodes.PARAM_REGISTER:
-				operand1 = self.state.getRegister(registerOperand1)
-				writebackFunction = lambda val: self.state.setRegister(registerOperand1, val)
+				elif operandType1 == Opcodes.PARAM_REGISTER:
+					operand1 = self.state.getRegister(registerOperand1)
+					writebackFunction = lambda val: self.state.setRegister(registerOperand1, val)
 
-			elif operandType1 == Opcodes.PARAM_MEMORY_SINGLE_DS:
-				operand1addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
-				if registerOperand1 != 31: operand1addr += self.state.getRegister(registerOperand1);
-				operand1addr = self.state.getResultingDataAddress(operand1addr)
-				operand1 = self.memory.readWord(operand1addr)
-				writebackFunction = lambda val: self.memory.writeWord(operand1addr, val)
-				ipadd += 1
+				elif operandType1 == Opcodes.PARAM_MEMORY_SINGLE_DS:
+					operand1addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
+					if registerOperand1 != 31: operand1addr += self.state.getRegister(registerOperand1);
+					operand1addr = self.state.getResultingDataAddress(operand1addr)
+					operand1 = self.memory.readWord(operand1addr)
+					writebackFunction = lambda val: self.memory.writeWord(operand1addr, val)
+					ipadd += 1
 
-			elif operandType1 == Opcodes.PARAM_MEMORY_SINGLE_ES:
-				operand1addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
-				if registerOperand1 != 31: operand1addr += self.state.getRegister(registerOperand1)
-				operand1addr = self.state.getResultingExtraAddress(operand1addr)
-				operand1 = self.memory.readWord(operand1addr)
-				writebackFunction = lambda val: self.memory.writeWord(operand1addr, val)
-				ipadd += 1
+				elif operandType1 == Opcodes.PARAM_MEMORY_SINGLE_ES:
+					operand1addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
+					if registerOperand1 != 31: operand1addr += self.state.getRegister(registerOperand1)
+					operand1addr = self.state.getResultingExtraAddress(operand1addr)
+					operand1 = self.memory.readWord(operand1addr)
+					writebackFunction = lambda val: self.memory.writeWord(operand1addr, val)
+					ipadd += 1
 
-			elif operandType1 == Opcodes.PARAM_MEMORY_DOUBLE_DS:
-				operand1addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
-				operand1addr = self.memory.readWord(self.state.getResultingDataAddress(operand1addr))
-				if registerOperand1 != 31: operand1addr += self.state.getRegister(registerOperand1)
-				operand1addr = self.state.getResultingDataAddress(operand1addr);
-				operand1 = self.memory.readWord(operand1addr)
-				writebackFunction = lambda val: self.memory.writeWord(operand1addr, val)
-				ipadd += 1
+				elif operandType1 == Opcodes.PARAM_MEMORY_DOUBLE_DS:
+					operand1addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
+					operand1addr = self.memory.readWord(self.state.getResultingDataAddress(operand1addr))
+					if registerOperand1 != 31: operand1addr += self.state.getRegister(registerOperand1)
+					operand1addr = self.state.getResultingDataAddress(operand1addr);
+					operand1 = self.memory.readWord(operand1addr)
+					writebackFunction = lambda val: self.memory.writeWord(operand1addr, val)
+					ipadd += 1
 
-			elif operandType1 == Opcodes.PARAM_MEMORY_DOUBLE_ES:
-				operand1addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
-				operand1addr = self.memory.readWord(self.state.getResultingExtraAddress(operand1addr))
-				if registerOperand1 != 31: operand1addr += self.state.getRegister(registerOperand1)
-				operand1addr = self.state.getResultingExtraAddress(operand1addr)
-				operand1 = self.memory.readWord(operand1addr)
-				writebackFunction = lambda val: self.memory.writeWord(operand1addr, val)
-				ipadd += 1
+				elif operandType1 == Opcodes.PARAM_MEMORY_DOUBLE_ES:
+					operand1addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
+					operand1addr = self.memory.readWord(self.state.getResultingExtraAddress(operand1addr))
+					if registerOperand1 != 31: operand1addr += self.state.getRegister(registerOperand1)
+					operand1addr = self.state.getResultingExtraAddress(operand1addr)
+					operand1 = self.memory.readWord(operand1addr)
+					writebackFunction = lambda val: self.memory.writeWord(operand1addr, val)
+					ipadd += 1
 
-			elif operandType1 == Opcodes.PARAM_SPECIAL_REGISTER:
-				operand1 = self.state.getSpecialRegister(registerOperand1)
-				writebackFunction = lambda val: self.state.setSpecialRegister(registerOperand1, val)
+				elif operandType1 == Opcodes.PARAM_SPECIAL_REGISTER:
+					operand1 = self.state.getSpecialRegister(registerOperand1)
+					writebackFunction = lambda val: self.state.setSpecialRegister(registerOperand1, val)
 
-			else:
-				self.logger.error("Unknown operand type for operand 1: %x", operandType1)
-				return False
+				else:
+					self.logger.error("Unknown operand type for operand 1: %x", operandType1)
+					return False
+
+			except CPUSegmentViolationException, e:
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+				return True
 		
 		#decode second operand type, fetch it and prepare a writeback closure
 		if argumentCount > 1:
-			if operandType2 == Opcodes.PARAM_IMMEDIATE:
-				operand2 = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
-				ipadd += 1
+			try:
+				if operandType2 == Opcodes.PARAM_IMMEDIATE:
+					operand2 = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
+					ipadd += 1
 
-			elif operandType2 == Opcodes.PARAM_REGISTER:
-				operand2 = self.state.setRegister(registerOperand2)
+				elif operandType2 == Opcodes.PARAM_REGISTER:
+					operand2 = self.state.setRegister(registerOperand2)
 
-			elif operandType2 == Opcodes.PARAM_MEMORY_SINGLE_DS:
-				operand2addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
-				if registerOperand2 != 31: operand2addr += self.state.getRegister(registerOperand2)
-				operand2 = self.memory.readWord(self.state.getResultingDataAddress(operand2addr))
-				ipadd += 1
+				elif operandType2 == Opcodes.PARAM_MEMORY_SINGLE_DS:
+					operand2addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
+					if registerOperand2 != 31: operand2addr += self.state.getRegister(registerOperand2)
+					operand2 = self.memory.readWord(self.state.getResultingDataAddress(operand2addr))
+					ipadd += 1
 
-			elif operandType2 == Opcodes.PARAM_MEMORY_SINGLE_ES:
-				operand2addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
-				if registerOperand2 != 31: operand2addr += self.state.getRegister(registerOperand2)
-				operand2 = self.memory.readWord(self.state.getResultingExtraAddress(operand2addr))
-				ipadd += 1
+				elif operandType2 == Opcodes.PARAM_MEMORY_SINGLE_ES:
+					operand2addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
+					if registerOperand2 != 31: operand2addr += self.state.getRegister(registerOperand2)
+					operand2 = self.memory.readWord(self.state.getResultingExtraAddress(operand2addr))
+					ipadd += 1
 
-			elif operandType2 == Opcodes.PARAM_MEMORY_DOUBLE_DS:
-				operand2addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
-				operand2addr = self.memory.readWord(self.state.getResultingDataAddress(operand2addr))
-				if registerOperand2 != 31: operand2addr += self.state.getRegister(registerOperand2)
-				operand2addr = self.state.getResultingDataAddress(operand2addr);
-				operand2 = self.memory.readWord(operand2addr)
-				ipadd += 1
+				elif operandType2 == Opcodes.PARAM_MEMORY_DOUBLE_DS:
+					operand2addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
+					operand2addr = self.memory.readWord(self.state.getResultingDataAddress(operand2addr))
+					if registerOperand2 != 31: operand2addr += self.state.getRegister(registerOperand2)
+					operand2addr = self.state.getResultingDataAddress(operand2addr);
+					operand2 = self.memory.readWord(operand2addr)
+					ipadd += 1
 
-			elif operandType2 == Opcodes.PARAM_MEMORY_DOUBLE_ES:
-				operand2addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
-				operand2addr = self.memory.readWord(self.state.getResultingExtraAddress(operand2addr))
-				if registerOperand2 != 31: operand2addr += self.state.getRegister(registerOperand2)
-				operand2addr = self.state.getResultingExtraAddress(operand2addr);
-				operand2 = self.memory.readWord(operand2addr)
-				ipadd += 1
+				elif operandType2 == Opcodes.PARAM_MEMORY_DOUBLE_ES:
+					operand2addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
+					operand2addr = self.memory.readWord(self.state.getResultingExtraAddress(operand2addr))
+					if registerOperand2 != 31: operand2addr += self.state.getRegister(registerOperand2)
+					operand2addr = self.state.getResultingExtraAddress(operand2addr);
+					operand2 = self.memory.readWord(operand2addr)
+					ipadd += 1
 
-			elif operandType2 == Opcodes.PARAM_SPECIAL_REGISTER:
-				operand2 = self.state.getSpecialRegister(registerOperand2)
+				elif operandType2 == Opcodes.PARAM_SPECIAL_REGISTER:
+					operand2 = self.state.getSpecialRegister(registerOperand2)
 
-			else:
-				self.logger.error("Unknown operand type for operand 2: %x", operandType2)
-				return False
+				else:
+					self.logger.error("Unknown operand type for operand 2: %x", operandType2)
+					return False
+			except CPUSegmentViolationException, e:
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+				return True
 
 
 		#TODO: if memory is involved, check segment violations
@@ -185,7 +194,7 @@ class CPU(object):
 		elif opcode == Opcodes.OP_DIV:
 			#print "Opcodes.OP_DIV"
 			if operand2 == 0:
-				self.logger.debug("Division by zero occured at physical 0x%x", self.state.getResultingInstructionAddress())
+				self.logger.debug("Division by zero occured at physical 0x%x", self.state.IP)
 				self.raiseInterrupt(Opcodes.INTR_DIV_BY_ZERO * 2, self.state.IP)
 				return True
 
@@ -286,34 +295,58 @@ class CPU(object):
 		#CALL
 		elif opcode == Opcodes.OP_CALL:
 			#push return address
-			self.pushToStack(self.state.IP + ipadd)
+			try:
+				self.pushToStack(self.state.IP + ipadd)
 
-			#set new IP
-			self.state.IP = operand1
+				#set new IP
+				self.state.IP = operand1
+			except CPUSegmentViolationException, e:
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+
 			return True
 
 		#RET
 		elif opcode == Opcodes.OP_RET:
 			#get new IP from stack
-			self.state.IP = self.popFromStack()
+			try:
+				self.state.IP = self.popFromStack()
+			except CPUSegmentViolationException, e:
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+
 			return True
 		
 		#PUSH
 		elif opcode == Opcodes.OP_PUSH:
-			self.pushToStack(operand1)
+			try:
+				self.pushToStack(operand1)
+			except CPUSegmentViolationException, e:
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+				return True
 
 		#POP
 		elif opcode == Opcodes.OP_POP:
-			writebackValue = self.popFromStack()
+			try:
+				writebackValue = self.popFromStack()
+			except CPUSegmentViolationException, e:
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+				return True
 
 		#INT
 		elif opcode == Opcodes.OP_INT:
-			self.raiseInterrupt((operand1 + Opcodes.INTR_SOFTWARE) * 2, self.state.IP + ipadd)
+			try:
+				self.raiseInterrupt((operand1 + Opcodes.INTR_SOFTWARE) * 2, self.state.IP + ipadd)
+			except CPUSegmentViolationException, e:
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+
 			return True
 
 		#RETI
 		elif opcode == Opcodes.OP_RETI:
-			self.state.IP = self.popFromStack()
+			try:
+				self.state.IP = self.popFromStack()
+			except CPUSegmentViolationException, e:
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+
 			return True
 
 		#VMRESUME

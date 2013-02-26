@@ -65,12 +65,16 @@ def executeCommand(cpu, args):
 	commands[args[0]][1](cpu, args[1:])
 
 def doStep(cpu, args):
-	data = cpu.memory.readRangeBinary(cpu.state.getResultingInstructionAddress(), 3)
+	if not cpu.doSimulationStep():
+		print "CPU Simulation ended"
+		return
+
+	data = cpu.memory.readRangeBinary(cpu.state.IP, 3)
 	(disassembled, consumedWords) = disassembler.disassembleInstructionWord(data)
 
 	text = ""
 	#print address
-	text += ("0x%08x:\t" % cpu.state.getResultingInstructionAddress())
+	text += ("0x%08x:\t" % cpu.state.IP)
 
 	#print words in hexadecimal...
 	for i in range(consumedWords):
@@ -84,9 +88,6 @@ def doStep(cpu, args):
 	text += "\t" + disassembled
 
 	print text
-
-	if not cpu.doSimulationStep():
-		print "CPU Simulation ended"
 
 def doDisassemble(cpu, args):
 	try:
@@ -121,12 +122,16 @@ def doDisassemble(cpu, args):
 
 def doContinue(cpu, args):
 	while True:
-		if cpu.state.IP in breakpoints:
-			print "Breakpoint hit at 0x%08x" % cpu.state.IP
-			return
+		try:
+			if cpu.state.IP in breakpoints:
+				print "Breakpoint hit at 0x%08x" % cpu.state.IP
+				return
 
-		if not cpu.doSimulationStep():
-			print "CPU Simulation ended"
+			if not cpu.doSimulationStep():
+				print "CPU Simulation ended"
+				return
+		except KeyboardInterrupt:
+			print "Breaking at 0x%08x" % cpu.state.IP
 			return
 
 def readMem(cpu, args):
@@ -158,7 +163,7 @@ def writeMem(cpu, args):
 
 def dumpStack(cpu, args):
 	#FIXME: kind of hacky, but meh...
-	addr = hex(cpu.state.getResultingStackAddress())
+	addr = hex(cpu.state.SP)
 	val = args[0]
 	readMem(cpu, [addr, val])
 
