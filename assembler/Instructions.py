@@ -392,9 +392,9 @@ def _parseAgumentType(arg, symtab, deftab):
 		#if memory address is a number, handle this here
 		if isinstance(arg.id, Number):
 			if arg.segment == 'ds':
-				return (PARAM_MEMORY_SINGLE_DS << 5 | regOffset, arg.id.val, None, None)
+				return (PARAM_MEMORY_DOUBLE_DS << 5 | regOffset, arg.id.val, None, None)
 			elif arg.segment == 'es':
-				return (PARAM_MEMORY_SINGLE_ES << 5 | regOffset, arg.id.val, None, None)
+				return (PARAM_MEMORY_DOUBLE_ES << 5 | regOffset, arg.id.val, None, None)
 			else:
 				raise Exception("Unknown memory segment: %s" % arg.segment)
 
