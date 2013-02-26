@@ -7,7 +7,7 @@ import logging
 from simulator.CPU import CPU
 
 def main(argc, argv):
-	parser = argparse.ArgumentParser(description='VM32 Linker')
+	parser = argparse.ArgumentParser(description='VM32 Simulator')
 	parser.add_argument('-d', '--debug', action='store_true', dest='debug', help='Display debug information (DEBUG)')
 
 	parser.add_argument('memoryImage', metavar='memory image', type=argparse.FileType('r'), help='Image to be loaded into the system memory')

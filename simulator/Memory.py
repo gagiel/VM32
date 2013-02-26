@@ -50,8 +50,22 @@ class Memory(object):
 		else:
 			return 0xFFFFFFFF
 
+	def readRange(self, address, length):
+		values = []
+		for i in range(length):
+			values.append(self.readWord(address + i))
+
+		return values
+
 	def readBinary(self, address):
 		return struct.pack("<I", self.readWord(address))
+
+	def readRangeBinary(self, address, length):
+		values = []
+		for i in range(length):
+			values.append(self.readBinary(address + i))
+
+		return values
 
 	#def readInstruction(self, address):
 	#	#TODO: Alignment to 64 bit? i.e. address dividable by 2 here?

@@ -1,6 +1,6 @@
 from .CPUState import CPUState
 from .Memory import Memory
-from .Exceptions import SimulatorError
+from .Exceptions import SimulatorError, CPUSegmentViolationException
 
 from common import Opcodes
 
@@ -23,10 +23,14 @@ class CPU(object):
 	def doSimulationStep(self):
 		#todo check if pc can be fetched from the resulting address
 
-		self.logger.debug("Fetching instruction from %x", self.state.getResultingInstructionAddress())
+		self.logger.debug("Fetching instruction from %x", self.state.IP)
 
-		curWord = self.memory.readBinary(self.state.getResultingInstructionAddress())
-		(opcode, privlvl, operandType1, operandType2) = struct.unpack("<BBBB", curWord)
+		try:
+			curWord = self.memory.readBinary(self.state.getResultingInstructionAddress())
+			(opcode, privlvl, operandType1, operandType2) = struct.unpack("<BBBB", curWord)
+		except CPUSegmentViolationException, e:
+			self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+			return True
 
 		registerOperand1 = operandType1 & 0x1F
 		operandType1 = operandType1 >> 5

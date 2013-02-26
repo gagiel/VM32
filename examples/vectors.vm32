@@ -10,7 +10,7 @@ vec_reset:
 
 #0x01
 vec_segmentViolation:
-	JMP vec_segmentViolation
+	JMP segViol
 
 #0x02
 vec_invalidOpcode:
@@ -141,6 +141,14 @@ divByZero:
 	PRINT 0x41
 	JMP hang
 
-testInterrupt:
+segViol:
 	PRINT 0x42
+	POP r0
+	PRINT r0
+	POP r0
+	PRINT r0
+	JMP hang
+
+testInterrupt:
+	PRINT 0x43
 	RETI

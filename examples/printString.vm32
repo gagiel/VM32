@@ -13,6 +13,8 @@ startup:
 
 	MOV CR_SEGTBL, segementationTable
 
+	#JMP endOfStack
+
 	CALL printWithMemory
 	CALL printWithRegisters
 
