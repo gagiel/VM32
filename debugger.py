@@ -53,6 +53,27 @@ def main(argc, argv):
 	#while cpu.doSimulationStep():
 	#	pass
 
+def disassembleInstruction(cpu, addr):
+	data = cpu.memory.readRangeBinary(addr, 3)
+	(disassembled, consumedWords) = disassembler.disassembleInstructionWord(data)
+
+	text = ""
+	#print address
+	text += ("0x%08x:\t" % addr)
+
+	#print words in hexadecimal...
+	for i in range(consumedWords):
+		text += ("%08x " % struct.unpack("<I", data[i])[0])
+
+	#... or insert tabs instead
+	for i in range(3 - consumedWords):
+		text += "\t "
+
+	#print the disassembled instructuin
+	text += "\t" + disassembled
+
+	return (text, consumedWords)
+
 def executeCommand(cpu, args):
 	if not commands.has_key(args[0]):
 		print "Unknown command: %s" % args[0]
@@ -69,24 +90,7 @@ def doStep(cpu, args):
 		print "CPU Simulation ended"
 		return
 
-	data = cpu.memory.readRangeBinary(cpu.state.IP, 3)
-	(disassembled, consumedWords) = disassembler.disassembleInstructionWord(data)
-
-	text = ""
-	#print address
-	text += ("0x%08x:\t" % cpu.state.IP)
-
-	#print words in hexadecimal...
-	for i in range(consumedWords):
-		text += ("%08x " % struct.unpack("<I", data[i])[0])
-
-	#... or insert tabs instead
-	for i in range(3 - consumedWords):
-		text += "\t "
-
-	#print the disassembled instructuin
-	text += "\t" + disassembled
-
+	(text, consumedWords) = disassembleInstruction(cpu, cpu.state.IP)
 	print text
 
 def doDisassemble(cpu, args):
@@ -95,26 +99,9 @@ def doDisassemble(cpu, args):
 		count = int(args[1], 16)
 		
 		for i in range(count):
-			data = cpu.memory.readRangeBinary(addr, 3)
-			(disassembled, consumedWords) = disassembler.disassembleInstructionWord(data)
-
-			text = ""
-			#print address
-			text += ("0x%08x:\t" % addr)
-
-			#print words in hexadecimal...
-			for i in range(consumedWords):
-				text += ("%08x " % struct.unpack("<I", data[i])[0])
-
-			#... or insert tabs instead
-			for i in range(3 - consumedWords):
-				text += "\t "
-
-			#print the disassembled instructuin
-			text += "\t" + disassembled
+			(text, consumedWords) = disassembleInstruction(cpu, addr)
 
 			print text
-
 			addr += consumedWords
 
 	except ValueError:
@@ -125,6 +112,8 @@ def doContinue(cpu, args):
 		try:
 			if cpu.state.IP in breakpoints:
 				print "Breakpoint hit at 0x%08x" % cpu.state.IP
+				(text, consumedWords) = disassembleInstruction(cpu, cpu.state.IP)
+				print text
 				return
 
 			if not cpu.doSimulationStep():
