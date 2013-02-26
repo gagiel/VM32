@@ -1,5 +1,5 @@
 from common.Opcodes import *
-from Exceptions import CPUStateError, CPUStateSegTblFaultyError
+from Exceptions import CPUStateError, CPUStateSegTblFaultyError, CPUSegmentViolationException
 
 from collections import namedtuple
 
@@ -43,31 +43,73 @@ class CPUState(object):
 		if len(self.segments) == 0:
 			return self.IP
 		else:
-			return self.segments[self.CS].start + self.IP
+			if self.IP < self.segments[self.CS].start or self.IP > self.segments[self.CS].limit:
+				raise CPUSegmentViolationException(SEGMENT_CODE, self.IP)
+
+			return self.IP
+
+			#if self.segments[self.CS].start + self.IP > self.segments[self.CS].limit or self.IP < 0:
+			#	raise CPUSegmentViolationException(SEGMENT_CODE, self.IP)
+
+
+			#return self.segments[self.CS].start + self.IP
 
 	def getResultingCodeAddress(self, offset):
 		if len(self.segments) == 0:
 			return offset
 		else:
-			return self.segments[self.CS].start + offset
+			if offset < self.segments[self.CS].start or offset > self.segments[self.CS].limit:
+				raise CPUSegmentViolationException(SEGMENT_CODE, offset)
+
+			return offset
+
+			#if self.segments[self.CS].start + offset > self.segments[self.CS].limit or offset < 0:
+			#	raise CPUSegmentViolationException(SEGMENT_CODE, offset)
+
+			#return self.segments[self.CS].start + offset
 
 	def getResultingDataAddress(self, offset):
 		if len(self.segments) == 0:
 			return offset
 		else:
-			return self.segments[self.DS].start + offset
+			#if self.segments[self.DS].start + offset > self.segments[self.DS].limit or offset < 0:
+			#	print "start: %x - offset: %x - limit: %x" % (self.segments[self.DS].start, offset, self.segments[self.DS].limit)
+			#	raise CPUSegmentViolationException(SEGMENT_DATA, offset)
+
+			#return self.segments[self.DS].start + offset
+
+			if offset < self.segments[self.DS].start or offset > self.segments[self.DS].limit:
+				raise CPUSegmentViolationException(SEGMENT_DATA, offset)
+
+			return offset
 
 	def getResultingExtraAddress(self, offset):
 		if len(self.segments) == 0:
 			return offset
 		else:
-			return self.segments[self.ES].start + offset
+			#if self.segments[self.ES].start + offset > self.segments[self.ES].limit or offset < 0:
+			#	raise CPUSegmentViolationException(SEGMENT_EXTRA, offset)
+
+			#return self.segments[self.ES].start + offset
+
+			if offset < self.segments[self.ES].start or offset > self.segments[self.ES].limit:
+				raise CPUSegmentViolationException(SEGMENT_EXTRA, offset)
+
+			return offset
 
 	def getResultingStackAddress(self):
 		if len(self.segments) == 0:
 			return self.SP
 		else:
-			return self.segments[self.SS].start + self.SP
+			#if self.segments[self.SS].start + self.SS > self.segments[self.SS].limit or self.SS < 0:
+			#	raise CPUSegmentViolationException(SEGMENT_STACK, self.SS)
+
+			#return self.segments[self.SS].start + self.SP
+
+			if self.SP < self.segments[self.SS].start or self.SP > self.segments[self.SS].limit:
+				raise CPUSegmentViolationException(SEGMENT_STACK, self.SP)
+
+			return self.SP
 
 	def getRegister(self, reg):
 		if reg < 0 or reg > 30:

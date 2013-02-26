@@ -9,7 +9,7 @@ startup:
 	MOV CR_RS, 2
 	MOV CR_SS, 3
 
-	MOV CR_STACKPTR, 512
+	MOV CR_STACKPTR, endOfStack
 
 	MOV CR_SEGTBL, segementationTable
 
@@ -29,7 +29,7 @@ end:
 ##########################################
 
 printWithMemory:
-	MOV (strPtr), 0		#address is segment relative to DS
+	MOV (strPtr), sayHello
 next_mem:
 	CMP [strPtr], 0
 	JZ end_mem
@@ -42,7 +42,7 @@ end_mem:
 ##########################################
 
 printWithRegisters:
-	MOV r0, 0			#address is segment relative to DS
+	MOV r0, sayHello
 next_reg:
 	CMP r0(0), 0
 	JZ end_reg

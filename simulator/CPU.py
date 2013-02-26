@@ -23,7 +23,7 @@ class CPU(object):
 	def doSimulationStep(self):
 		#todo check if pc can be fetched from the resulting address
 
-		self.logger.debug("Fetching instruction from %x", self.state.getResultingInstructionAddress()*4)
+		self.logger.debug("Fetching instruction from %x", self.state.getResultingInstructionAddress())
 
 		curWord = self.memory.readBinary(self.state.getResultingInstructionAddress())
 		(opcode, privlvl, operandType1, operandType2) = struct.unpack("<BBBB", curWord)
@@ -72,16 +72,16 @@ class CPU(object):
 
 			elif operandType1 == Opcodes.PARAM_MEMORY_SINGLE_DS:
 				operand1addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
-				operand1addr = self.state.getResultingDataAddress(operand1addr)
 				if registerOperand1 != 31: operand1addr += self.state.getRegister(registerOperand1);
+				operand1addr = self.state.getResultingDataAddress(operand1addr)
 				operand1 = self.memory.readWord(operand1addr)
 				writebackFunction = lambda val: self.memory.writeWord(operand1addr, val)
 				ipadd += 1
 
 			elif operandType1 == Opcodes.PARAM_MEMORY_SINGLE_ES:
 				operand1addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
-				operand1addr = self.state.getResultingExtraAddress(operand1addr)
 				if registerOperand1 != 31: operand1addr += self.state.getRegister(registerOperand1)
+				operand1addr = self.state.getResultingExtraAddress(operand1addr)
 				operand1 = self.memory.readWord(operand1addr)
 				writebackFunction = lambda val: self.memory.writeWord(operand1addr, val)
 				ipadd += 1
@@ -89,8 +89,8 @@ class CPU(object):
 			elif operandType1 == Opcodes.PARAM_MEMORY_DOUBLE_DS:
 				operand1addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
 				operand1addr = self.memory.readWord(self.state.getResultingDataAddress(operand1addr))
-				operand1addr = self.state.getResultingDataAddress(operand1addr);
 				if registerOperand1 != 31: operand1addr += self.state.getRegister(registerOperand1)
+				operand1addr = self.state.getResultingDataAddress(operand1addr);
 				operand1 = self.memory.readWord(operand1addr)
 				writebackFunction = lambda val: self.memory.writeWord(operand1addr, val)
 				ipadd += 1
@@ -98,8 +98,8 @@ class CPU(object):
 			elif operandType1 == Opcodes.PARAM_MEMORY_DOUBLE_ES:
 				operand1addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
 				operand1addr = self.memory.readWord(self.state.getResultingExtraAddress(operand1addr))
-				operand1addr = self.state.getResultingExtraAddress(operand1addr)
 				if registerOperand1 != 31: operand1addr += self.state.getRegister(registerOperand1)
+				operand1addr = self.state.getResultingExtraAddress(operand1addr)
 				operand1 = self.memory.readWord(operand1addr)
 				writebackFunction = lambda val: self.memory.writeWord(operand1addr, val)
 				ipadd += 1
@@ -137,14 +137,16 @@ class CPU(object):
 				operand2addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
 				operand2addr = self.memory.readWord(self.state.getResultingDataAddress(operand2addr))
 				if registerOperand2 != 31: operand2addr += self.state.getRegister(registerOperand2)
-				operand2 = self.memory.readWord(self.state.getResultingDataAddress(operand2addr))
+				operand2addr = self.state.getResultingDataAddress(operand2addr);
+				operand2 = self.memory.readWord(operand2addr)
 				ipadd += 1
 
 			elif operandType2 == Opcodes.PARAM_MEMORY_DOUBLE_ES:
 				operand2addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
 				operand2addr = self.memory.readWord(self.state.getResultingExtraAddress(operand2addr))
 				if registerOperand2 != 31: operand2addr += self.state.getRegister(registerOperand2)
-				operand2 = self.memory.readWord(self.state.getResultingExtraAddress(operand2addr))
+				operand2addr = self.state.getResultingExtraAddress(operand2addr);
+				operand2 = self.memory.readWord(operand2addr)
 				ipadd += 1
 
 			elif operandType2 == Opcodes.PARAM_SPECIAL_REGISTER:
@@ -346,12 +348,15 @@ class CPU(object):
 		self.state.incrementStackPointer()
 		return stackValue
 
+	def raiseSegmentViolation(self, segmentIndex):
+		self.raiseInterrupt(INTR_SEG_VIOL * 2, self.state.IP, [segmentIndex])
 
-	def raiseInterrupt(self, interruptNumber, returnIp):
+	def raiseInterrupt(self, interruptNumber, returnIp, additionalStackValues = []):
 		if interruptNumber > 32:
 			raise SimulatorError("Interrupt number is out of bounds")
 
 		if not self.state.InVM:
+			map(lambda x: self.pushToStack(x), additionalStackValues)
 			self.pushToStack(returnIp)
 			self.state.IP = self.state.getResultingCodeAddress(interruptNumber)
 		else:

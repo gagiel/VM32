@@ -60,6 +60,17 @@ SPECIALREGS = {
 	'ss': SPECIALREG_SS
 }
 
+SPECIALREGS_NAMES = [
+	'SEGTBL',
+	'VMTBL',
+	'STACKPTR',
+	'CS',
+	'DS',
+	'ES',
+	'RS',
+	'SS'
+]
+
 
 #Possible parameter types
 PARAM_IMMEDIATE 		= 0x00

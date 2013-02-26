@@ -207,6 +207,10 @@ def getArgumentCount(opcode):
 	#TODO throw exception if unknown opcode
 	return _INSTR[opcode]['nargs']
 
+def getInstructionName(opcode):
+	#TODO throw exception if unknown opcode
+	return _INSTR[opcode]['name']
+
 def areParametersValid(opcode, operandType1, operandType2):
 	if not opcode in _INSTR:
 		return False
