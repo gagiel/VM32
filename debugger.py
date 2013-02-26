@@ -86,8 +86,48 @@ def doStep(cpu, args):
 	print text
 
 	if not cpu.doSimulationStep():
-		print "CPU Simulator ended, exiting"
-		sys.exit(0)
+		print "CPU Simulation ended"
+
+def doDisassemble(cpu, args):
+	try:
+		addr = int(args[0], 16)
+		count = int(args[1], 16)
+		
+		for i in range(count):
+			data = cpu.memory.readRangeBinary(addr, 3)
+			(disassembled, consumedWords) = disassembler.disassembleInstructionWord(data)
+
+			text = ""
+			#print address
+			text += ("0x%08x:\t" % addr)
+
+			#print words in hexadecimal...
+			for i in range(consumedWords):
+				text += ("%08x " % struct.unpack("<I", data[i])[0])
+
+			#... or insert tabs instead
+			for i in range(3 - consumedWords):
+				text += "\t "
+
+			#print the disassembled instructuin
+			text += "\t" + disassembled
+
+			print text
+
+			addr += consumedWords
+
+	except ValueError:
+		print "Argument was not hex addr"
+
+def doContinue(cpu, args):
+	while True:
+		if cpu.state.IP in breakpoints:
+			print "Breakpoint hit at 0x%08x" % cpu.state.IP
+			return
+
+		if not cpu.doSimulationStep():
+			print "CPU Simulation ended"
+			return
 
 def readMem(cpu, args):
 	try:
@@ -154,10 +194,12 @@ def delBreakpoint(cpu, args):
 		print "Argument not an int"
 
 commands = {
+	"continue": [0, doContinue, "Runs the "],
 	"break": [1, addBreakpoint, "Adds a breakpoint for physical address x in hex"],
 	"listBreaks": [0, listBreaks, "Lists all breakpoints"],
 	"delBreak": [1, delBreakpoint, "Removes breakpoint x"],
 	"step": [0, doStep, "Executes one simulation step"],
+	"disassemble": [2, doDisassemble, "Dissassemble from x on y instructions"],
 	"readMem": [1, readMem, "Reads memory"],
 	"writeMem": [2, writeMem, "Writes memory"],
 	"stack": [1, dumpStack, "Dumps n words from stack"],
