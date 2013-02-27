@@ -9,6 +9,7 @@ import cmd
 
 from simulator.CPU import CPU
 from utils.Disassembler import Disassembler
+from common import Opcodes
 
 def main(argc, argv):
 	parser = argparse.ArgumentParser(description='VM32 Debuuger')
@@ -159,6 +160,16 @@ class DebuggerShell(cmd.Cmd):
 				print "Breaking at 0x%08x" % self.cpu.state.IP
 				return
 
+	def do_segtbl(self, line):
+		for (idx, segment) in enumerate(self.cpu.state.segments):
+			print "Segment %d - Start: 0x%08x - Limit: 0x%08x - PrivLvl: 0x%02x - Type: %s" \
+				% (idx, segment.start, segment.limit, segment.privLvl, Opcodes.SEGMENTTYPE_NAMES[segment.type])
+
+	def do_vmtbl(self, line):
+		for (idx, vm) in enumerate(self.cpu.state.vms):
+			print "VM %d - CS: %d - DS: %d - ES: %d - SS: %d - RS: %d - PrivLvl: 0x%02x" \
+				% (idx, vm.CS, vm.DS, vm.ES, vm.SS, vm.RS, vm.privLvl)
+
 	def do_reset(self, line):
 		print "Resetting CPU"
 		self.cpu.reset()
@@ -226,7 +237,7 @@ def getRegisterStringRepresentation(state):
 	string += "\n"
 
 	string += "InVM: %s\n" % state.InVM
-	#string += "VmID: 0x%08x\n" % state.VmID
+	string += "VmID: 0x%08x\n" % state.VmID
 
 	string += "\n"
 
@@ -236,7 +247,6 @@ def getRegisterStringRepresentation(state):
 		string += "r%02d: %x\n" % (i, state.getRegister(i))
 
 	return string
-
 
 if __name__ == '__main__':
 	main(len(sys.argv), sys.argv)

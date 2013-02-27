@@ -32,7 +32,7 @@ class CPUState(object):
 		self.SegTbl = 0
 
 		self.InVM = False
-		#self.VmID = 0
+		self.VmID = 0
 
 		self.privLvl = 0
 
@@ -198,6 +198,7 @@ class CPUState(object):
 			raise CPUStateError("Special Register index out of bounds")
 
 		#FIXME: Trap, wenn in VM
+		#FIXME: typen von segmenten checken
 
 		if index == SPECIALREG_SEGTBL:
 			self.SegTbl = value
@@ -267,4 +268,14 @@ class CPUState(object):
 				break
 
 			#FIXME: check if segment selectors are not out of bounds
-			selg.vms.append(VmEntry(cs, ds, es, ss, rs, privLvl))
+			self.vms.append(VmEntry(cs, ds, es, ss, rs, privLvl))
+
+	def setVmContext(self, vmid):
+		#TODO: check index bounds of vmid
+
+		self.VmID = vmid
+		self.CS = self.vms[vmid].CS
+		self.DS = self.vms[vmid].DS
+		self.ES = self.vms[vmid].ES
+		self.RS = self.vms[vmid].RS
+		self.SS = self.vms[vmid].SS

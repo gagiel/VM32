@@ -14,9 +14,14 @@ startup:
 	MOV CR_STACKPTR, endOfStack
 
 	MOV CR_SEGTBL, segementationTable
+	MOV CR_VMTBL, vmTable
 
 	MOV r0, bootStr
 	CALL printString
+
+	PUSH vm1CodeStart		#Push instruction pointer of VM
+	PUSH 1					#Push ID in VMTBL for context switch
+	VMRESUME
 
 end:
 	HALT
@@ -47,23 +52,29 @@ bootStr:
 	.string "VM32 Hypervisor booting\n"
 
 
-
 segementationTable:
-#        Start               Limit           Type      		PrivLvl
-#CS
-.word    InterruptVectors,   codeEnd,        0,        		0
+#		Start				Limit			Type		PrivLvl
+#HV
+.word	InterruptVectors,	codeEnd,		0,			0			#Hypervisor CS
+.word	startOfData,		endOfData,		1,			0			#Hypervisor DS
+.word	startOfRegisters,	endOfRegisters,	2,			0			#Hypervisor RS
+.word	startOfStack,		endOfStack,		3,			0			#Hypervisor SS
 
-#DS
-.word    startOfData,        endOfData,      1,        		0
+#VM1
+.word	vm1CodeStart,		vm1CodeEnd,		0,			0			#VM1 CS
+.word	vm1DataStart,		vm1DataEnd,		1,			0			#VM1 DS
+.word	vm1RegsStart,		vm1RegsEnd,		2,			0			#VM1 RS
+.word	vm1StackStart,		vm1StackEnd,	3,			0			#VM1 SS
 
-#DS
-.word    startOfRegisters,   endOfRegisters, 2,        		0
+#EOT
+.word	0xFFFFFFFF,			0xFFFFFFFF,		0xFFFFFFFF,	0xFFFFFFFF	#END of Table
 
-#DS
-.word    startOfStack,       endOfStack,     3,				0
 
-#END
-.word    0xFFFFFFFF,         0xFFFFFFFF,     0xFFFFFFFF,	0xFFFFFFFF
+vmTable:
+#		CS			DS			ES			SS			RS			PrivLvl
+.word	0,			1,			1,			3,			2,			0					#Hypervisor
+.word	4,			5,			5,			7,			6,			0					#VM1
+.word	0xFFFFFFFF,	0xFFFFFFFF,	0xFFFFFFFF,	0xFFFFFFFF,	0xFFFFFFFF,	0xFFFFFFFF			#EOT
 
 endOfData:
 

@@ -1,5 +1,5 @@
 TARGET = hv.bin
-OBJECTS = vectors.obj hv.obj
+OBJECTS = vectors.obj hv.obj vm1.obj
 
 AS := ../../assemble.py 
 LD := ../../link.py

@@ -351,7 +351,17 @@ class CPU(object):
 
 		#VMRESUME
 		elif opcode == Opcodes.OP_VMRESUME:
+			try:
+				vmid = self.popFromStack()
+				self.state.IP = self.popFromStack()
+				self.state.InVM = True
+				self.state.setVmContext(vmid)
+
+			except CPUSegmentViolationException, e:
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+
 			print "Opcodes.OP_VMRESUME"
+			return True
 
 		#Unknown - internal error
 		else:
