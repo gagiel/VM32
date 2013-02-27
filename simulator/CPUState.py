@@ -4,6 +4,7 @@ from Exceptions import CPUStateError, CPUStateSegTblFaultyError, CPUSegmentViola
 from collections import namedtuple
 
 SegmentEntry = namedtuple("SegmentEntry", ["start", "limit", "type", "privLvl"])
+VmEntry = namedtuple("VmEntry", ["CS", "DS", "ES", "SS", "RS", "privLvl"])
 
 class CPUState(object):
 	def __init__(self):
@@ -36,6 +37,7 @@ class CPUState(object):
 		self.privLvl = 0
 
 		self.segments = []
+		self.vms = []
 
 	def getResultingInstructionAddress(self):
 		#TODO: check if segment exists, check if limit is violated, check if type matches and check if privLvl is not violated
@@ -169,6 +171,8 @@ class CPUState(object):
 		if index < 0 or index > len(SPECIALREGS):
 			raise CPUStateError("Special Register index out of bounds")
 
+		#FIXME: Trap, wenn in VM
+
 		if index == SPECIALREG_SEGTBL:
 			return self.SegTbl
 		elif index == SPECIALREG_VMTBL:
@@ -193,11 +197,14 @@ class CPUState(object):
 		if index < 0 or index > len(SPECIALREGS):
 			raise CPUStateError("Special Register index out of bounds")
 
+		#FIXME: Trap, wenn in VM
+
 		if index == SPECIALREG_SEGTBL:
 			self.SegTbl = value
 			self._parseNewSegTbl()
 		elif index == SPECIALREG_VMTBL:
 			self.VmTbl = value
+			self._parseNewVmTbl()
 		elif index == SPECIALREG_STACKPTR:
 			self.SP = value
 		elif index == SPECIALREG_CS:
@@ -238,6 +245,26 @@ class CPUState(object):
 
 			self.segments.append(SegmentEntry(start, limit, type, privLvl))
 
+	def _parseNewVmTbl(self):
+		self.vms = []
 
+		address = self.VmTbl
+		while True:
+			cs = self.memory.readWord(address)
+			address += 1
+			ds = self.memory.readWord(address)
+			address += 1
+			es = self.memory.readWord(address)
+			address += 1
+			ss = self.memory.readWord(address)
+			address += 1
+			rs = self.memory.readWord(address)
+			address += 1
+			privLvl = self.memory.readWord(address)
+			address += 1
 
+			if cs == 0xFFFFFFFF and ds == 0xFFFFFFFF and es == 0xFFFFFFFF and ss == 0xFFFFFFFF and rs == 0xFFFFFFFF and privLvl == 0xFFFFFFFF:
+				break
 
+			#FIXME: check if segment selectors are not out of bounds
+			selg.vms.append(VmEntry(cs, ds, es, ss, rs, privLvl))
