@@ -238,38 +238,6 @@ class CPUState(object):
 
 			self.segments.append(SegmentEntry(start, limit, type, privLvl))
 
-	def getStringRepresentation(self):
-		string = ""
-		string += "CS: 0x%08x\n" % self.CS
-		string += "DS: 0x%08x\n" % self.DS
-		string += "ES: 0x%08x\n" % self.ES
-		string += "SS: 0x%08x\n" % self.SS
-		string += "RS: 0x%08x\n" % self.RS
 
-		string += "\n"
 
-		string += "IP: 0x%08x\n" % self.IP
-		string += "SP: 0x%08x\n" % self.SP
 
-		string += "\n"
-
-		string += "Flags: 0x%08x\n" % self.Flags
-
-		string += "\n"
-
-		string += "VmTbl: 0x%08x\n" % self.VmTbl
-		string += "SegTbl: 0x%08x\n" % self.SegTbl
-
-		string += "\n"
-
-		string += "InVM: %s\n" % self.InVM
-		#string += "self.VmID: 0x%08x\n" % self.VmID
-
-		string += "\n"
-
-		string += "privLvl: 0x%s\n" % self.privLvl
-
-		for i in range(31):
-			string += "r%02d: %x\n" % (i, self.getRegister(i))
-
-		return string

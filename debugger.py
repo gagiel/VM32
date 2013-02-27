@@ -116,7 +116,7 @@ class DebuggerShell(cmd.Cmd):
 			print "Argument parsing failed"
 
 	def do_reg(self, line):
-		print self.cpu.state.getStringRepresentation()
+		print getRegisterStringRepresentation(self.cpu.state)
 
 	def do_step(self, line):
 		if not self.cpu.doSimulationStep():
@@ -200,6 +200,43 @@ def disassembleInstruction(cpu, addr):
 	text += "\t" + disassembled
 
 	return (text, consumedWords)
+
+def getRegisterStringRepresentation(state):
+	string = ""
+	string += "CS: 0x%08x\n" % state.CS
+	string += "DS: 0x%08x\n" % state.DS
+	string += "ES: 0x%08x\n" % state.ES
+	string += "SS: 0x%08x\n" % state.SS
+	string += "RS: 0x%08x\n" % state.RS
+
+	string += "\n"
+
+	string += "IP: 0x%08x\n" % state.IP
+	string += "SP: 0x%08x\n" % state.SP
+
+	string += "\n"
+
+	string += "Flags: 0x%08x\n" % state.Flags
+
+	string += "\n"
+
+	string += "VmTbl: 0x%08x\n" % state.VmTbl
+	string += "SegTbl: 0x%08x\n" % state.SegTbl
+
+	string += "\n"
+
+	string += "InVM: %s\n" % state.InVM
+	#string += "VmID: 0x%08x\n" % state.VmID
+
+	string += "\n"
+
+	string += "privLvl: 0x%s\n" % state.privLvl
+
+	for i in range(31):
+		string += "r%02d: %x\n" % (i, state.getRegister(i))
+
+	return string
+
 
 if __name__ == '__main__':
 	main(len(sys.argv), sys.argv)
