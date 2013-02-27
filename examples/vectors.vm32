@@ -135,6 +135,7 @@ vec_softwareStart:
 	NOP
 
 hang:
+	HALT
 	JMP hang
 
 divByZero:

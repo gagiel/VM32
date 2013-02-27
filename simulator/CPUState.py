@@ -227,7 +227,7 @@ class CPUState(object):
 			privLvl = self.memory.readWord(address)
 			address += 1
 
-			if start == 0 and limit == 0 and type == 0 and privLvl == 0:
+			if start == 0xFFFFFFFF and limit == 0xFFFFFFFF and type == 0xFFFFFFFF and privLvl == 0xFFFFFFFF:
 				break
 
 			if not type in SEGMENT_TYPES:

@@ -68,24 +68,27 @@ sayHello:
 strPtr:
 	.alloc 1
 
+#someSymbol:
+#	.word 0x100000
+
 
 
 segementationTable:
-#        Start               Limit           Type      PrivLvl
+#        Start               Limit           Type      		PrivLvl
 #CS
-.word    InterruptVectors,   codeEnd,        0,        0
+.word    InterruptVectors,   codeEnd,        0,        		0
 
 #DS
-.word    startOfData,        endOfData,      1,        0
+.word    startOfData,        endOfData,      1,        		0
 
 #DS
-.word    startOfRegisters,   endOfRegisters, 2,        0
+.word    startOfRegisters,   endOfRegisters, 2,        		0
 
 #DS
-.word    startOfStack,       endOfStack,     3,        0
+.word    startOfStack,       endOfStack,     3,				0
 
 #END
-.word    0,                  0,              0,        0
+.word    0xFFFFFFFF,         0xFFFFFFFF,     0xFFFFFFFF,	0xFFFFFFFF
 
 endOfData:
 
