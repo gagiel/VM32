@@ -392,6 +392,8 @@ class CPU(object):
 		if interruptNumber > 32:
 			raise SimulatorError("Interrupt number is out of bounds")
 
+		#FIXME: move interrupt vectors to start of current CS
+
 		if not self.state.InVM:
 			map(lambda x: self.pushToStack(x), additionalStackValues)
 			self.pushToStack(returnIp)

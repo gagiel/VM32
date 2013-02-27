@@ -1,0 +1,82 @@
+.SEGMENT code
+.privLvl 0
+.GLOBAL startup
+
+.define stuff, 0x10000
+
+startup:
+	MOV CR_CS, 0
+	MOV CR_DS, 1
+	MOV CR_ES, 1
+	MOV CR_RS, 2
+	MOV CR_SS, 3
+
+	MOV CR_STACKPTR, endOfStack
+
+	MOV CR_SEGTBL, segementationTable
+
+	MOV r0, bootStr
+	CALL printString
+
+end:
+	HALT
+	JMP end
+
+
+##########################################
+
+#r0 takes pointer to string to print
+printString:
+	CMP r0(0), 0
+	JZ end_reg
+	PRINT r0(0)
+	ADD r0, 1
+	JMP printString
+end_reg:
+	RET
+
+
+codeEnd:
+
+##########################################
+
+.SEGMENT data
+startOfData:
+
+bootStr:
+	.string "VM32 Hypervisor booting\n"
+
+
+
+segementationTable:
+#        Start               Limit           Type      		PrivLvl
+#CS
+.word    InterruptVectors,   codeEnd,        0,        		0
+
+#DS
+.word    startOfData,        endOfData,      1,        		0
+
+#DS
+.word    startOfRegisters,   endOfRegisters, 2,        		0
+
+#DS
+.word    startOfStack,       endOfStack,     3,				0
+
+#END
+.word    0xFFFFFFFF,         0xFFFFFFFF,     0xFFFFFFFF,	0xFFFFFFFF
+
+endOfData:
+
+##########################################
+
+.SEGMENT registers
+startOfRegisters:
+.alloc 31
+endOfRegisters:
+
+##########################################
+
+.SEGMENT stack
+startOfStack:
+.alloc 512
+endOfStack:

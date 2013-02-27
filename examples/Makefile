@@ -1,18 +1,15 @@
-TARGET = test.bin
-OBJECTS = vectors.obj printString.obj
+SUBTARGETS = hvtest printString
 
-AS := ../assemble.py 
-LD := ../link.py
+DIRS = $(SUBTARGETS:%=%.dir)
 
-all: $(TARGET)
+%.dir:
+	@make --no-print-directory -C $* all
 
-$(TARGET): $(OBJECTS)
-	$(LD) -d -o $@ $^
-
-%.obj: %.vm32
-	$(AS) -d -o $@ $<
+all: $(DIRS)
 
 clean:
-	rm -f *.obj *.bin
+	@-for i in $(SUBTARGETS); do \
+		make --no-print-directory -C $$i clean; \
+	done
 
-.PHONY: clean
+.PHONY: clean all
