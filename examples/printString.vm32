@@ -2,6 +2,8 @@
 .privLvl 0
 .GLOBAL startup
 
+.define stuff, 0x10000
+
 startup:
 	MOV CR_CS, 0
 	MOV CR_DS, 1
@@ -13,7 +15,7 @@ startup:
 
 	MOV CR_SEGTBL, segementationTable
 
-	#JMP endOfStack
+	#CALL doNastySegmentViolations
 
 	CALL printWithMemory
 	CALL printWithRegisters
@@ -27,6 +29,12 @@ end:
 	HALT
 	JMP end
 
+
+#doNastySegmentViolations:
+#	PRINT ds:(0x10000)
+#	mov r0, 10
+#	PRINT r0[someSymbol]
+#	JMP endOfStack
 
 ##########################################
 
