@@ -4,7 +4,7 @@ from Exceptions import CPUStateError, CPUStateSegTblFaultyError, CPUSegmentViola
 from collections import namedtuple
 
 SegmentEntry = namedtuple("SegmentEntry", ["start", "limit", "type", "privLvl"])
-VmEntry = namedtuple("VmEntry", ["CS", "DS", "ES", "SS", "RS", "privLvl"])
+VmEntry = namedtuple("VmEntry", ["CS", "DS", "ES", "SS", "RS", "IP", "SP", "Flags", "privLvl"])
 
 class CPUState(object):
 	def __init__(self):
@@ -261,21 +261,32 @@ class CPUState(object):
 			address += 1
 			rs = self.memory.readWord(address)
 			address += 1
+			ip = self.memory.readWord(address)
+			address += 1
+			sp = self.memory.readWord(address)
+			address += 1
+			flags = self.memory.readWord(address)
+			address += 1
 			privLvl = self.memory.readWord(address)
 			address += 1
 
-			if cs == 0xFFFFFFFF and ds == 0xFFFFFFFF and es == 0xFFFFFFFF and ss == 0xFFFFFFFF and rs == 0xFFFFFFFF and privLvl == 0xFFFFFFFF:
+			if cs == 0xFFFFFFFF and ds == 0xFFFFFFFF and es == 0xFFFFFFFF and ss == 0xFFFFFFFF and rs == 0xFFFFFFFF and ip == 0xFFFFFFFF and sp == 0xFFFFFFFF and flags == 0xFFFFFFFF and privLvl == 0xFFFFFFFF:
 				break
 
 			#FIXME: check if segment selectors are not out of bounds
-			self.vms.append(VmEntry(cs, ds, es, ss, rs, privLvl))
+			self.vms.append(VmEntry(cs, ds, es, ss, rs, ip, sp, flags, privLvl))
 
 	def setVmContext(self, vmid):
 		#TODO: check index bounds of vmid
+		self._parseNewSegTbl()
 
+		self.InVM = True
 		self.VmID = vmid
 		self.CS = self.vms[vmid].CS
 		self.DS = self.vms[vmid].DS
 		self.ES = self.vms[vmid].ES
 		self.RS = self.vms[vmid].RS
 		self.SS = self.vms[vmid].SS
+		self.IP = self.vms[vmid].IP
+		self.SP = self.vms[vmid].SP
+		self.Flags = self.vms[vmid].Flags

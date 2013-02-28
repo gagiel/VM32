@@ -194,9 +194,11 @@ _INSTR = {
 		'paramtypes': []
 	},
 	OP_VMRESUME: {
-		'nargs': 0,
+		'nargs': 1,
 		'name': 'VMRESUME',
-		'paramtypes': []
+		'paramtypes': [
+			[PARAM_IMMEDIATE]
+		]
 	},
 }
 
