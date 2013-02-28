@@ -352,6 +352,8 @@ class CPU(object):
 		#VMRESUME
 		elif opcode == Opcodes.OP_VMRESUME:
 			#try:
+			self.state.IP += ipadd
+			self.state.saveHypervisorContext()
 			self.state.setVmContext(operand1)
 			#except CPUSegmentViolationException, e:
 			#	self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])

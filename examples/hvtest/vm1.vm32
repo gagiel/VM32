@@ -41,7 +41,6 @@ JMP hang #INT 25
 vmSegviol:
 vmInvalid:
 vmDivByZero:
-	PRINT 0x41
 vmHvTrap:
 vmTimerInt:
 

@@ -1,6 +1,11 @@
 .SEGMENT code
 .privLvl 0
 .GLOBAL startup
+.GLOBAL hvSegmentViolation
+.GLOBAL hvInvalidOpcode
+.GLOBAL hvDivisionByZero
+.GLOBAL hvTrapHandler
+.GLOBAL hvTimerInterrupt
 
 .define stuff, 0x10000
 
@@ -25,9 +30,30 @@ startup:
 	MOV CR_VMTBL, vmTable			#After every modification, reload must be triggered
 	VMRESUME 1						#Jump into VM 1
 
+	#This should not happen as we are only handling traps from now on
 end:
 	HALT
 	JMP end
+
+hvSegmentViolation:
+	PRINT 0x42
+	HALT
+
+hvInvalidOpcode:
+	PRINT 0x43
+	HALT
+
+hvDivisionByZero:
+	PRINT 0x44
+	HALT
+
+hvTrapHandler:
+	PRINT 0x41
+	HALT
+
+hvTimerInterrupt:
+	PRINT 0x45
+	HALT
 
 
 ##########################################

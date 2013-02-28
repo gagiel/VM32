@@ -282,6 +282,33 @@ class CPUState(object):
 			#FIXME: check if segment selectors are not out of bounds
 			self.vms.append(VmEntry(cs, ds, es, ss, rs, ip, sp, flags, privLvl))
 
+	def saveHypervisorContext(self):
+		#overwrite first entry (always hypervisor) with current state
+
+		#FIXME: error if vmtbl == 0
+
+		address = self.VmTbl
+		self.memory.writeWord(address, self.CS)
+		address += 1
+		self.memory.writeWord(address, self.DS)
+		address += 1
+		self.memory.writeWord(address, self.ES)
+		address += 1
+		self.memory.writeWord(address, self.SS)
+		address += 1
+		self.memory.writeWord(address, self.RS)
+		address += 1
+		self.memory.writeWord(address, self.IP)
+		address += 1
+		self.memory.writeWord(address, self.SP)
+		address += 1
+		self.memory.writeWord(address, self.Flags)
+		address += 1
+		self.memory.writeWord(address, self.privLvl)
+
+		self._parseNewVmTbl()
+
+
 	def setVmContext(self, vmid):
 		#TODO: check index bounds of vmid
 		self._parseNewSegTbl()
@@ -296,3 +323,4 @@ class CPUState(object):
 		self.IP = self.vms[vmid].IP
 		self.SP = self.vms[vmid].SP
 		self.Flags = self.vms[vmid].Flags
+		self.privLvl = self.vms[vmid].privLvl

@@ -9,30 +9,26 @@ vec_reset:
 	JMP startup
 
 #0x01
-vec_segmentViolation:
-	JMP segViol
+	JMP hvSegmentViolation
 
 #0x02
-vec_invalidOpcode:
-	JMP vec_invalidOpcode
+	JMP hvInvalidOpcode
 
 #0x03
-vec_divisionByZero:
-	JMP divByZero
+	JMP hvDivisionByZero
 
 #0x04
-vec_hypervisorTrap:
-	JMP vec_hypervisorTrap
+	JMP hvTrapHandler
 
 #0x05
-vec_timerInterrupt:
-	JMP vec_timerInterrupt
+	JMP hvTimerInterrupt
 
 
 
 #0x06-0x20
-vec_softwareStart:
-	JMP testInterrupt
+#INT 0
+	NOP
+	NOP
 
 #INT 1
 	NOP
@@ -137,19 +133,3 @@ vec_softwareStart:
 hang:
 	HALT
 	JMP hang
-
-divByZero:
-	PRINT 0x41
-	JMP hang
-
-segViol:
-	PRINT 0x42
-	POP r0
-	PRINT r0
-	POP r0
-	PRINT r0
-	JMP hang
-
-testInterrupt:
-	PRINT 0x43
-	RETI
