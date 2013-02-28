@@ -167,8 +167,8 @@ class DebuggerShell(cmd.Cmd):
 
 	def do_vmtbl(self, line):
 		for (idx, vm) in enumerate(self.cpu.state.vms):
-			print "VM %d - CS: %d - DS: %d - ES: %d - SS: %d - RS: %d - PrivLvl: 0x%02x" \
-				% (idx, vm.CS, vm.DS, vm.ES, vm.SS, vm.RS, vm.privLvl)
+			print "VM %d - CS: %d - DS: %d - ES: %d - SS: %d - RS: %d - IP: 0x%08x - SP: 0x%08x - Flags: 0x%08x - PrivLvl: 0x%02x" \
+				% (idx, vm.CS, vm.DS, vm.ES, vm.SS, vm.RS, vm.IP, vm.SP, vm.Flags, vm.privLvl)
 
 	def do_reset(self, line):
 		print "Resetting CPU"
