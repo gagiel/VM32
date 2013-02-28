@@ -127,27 +127,21 @@ class Assembler(object):
 				try:
 					#assemble the instruction and generate import and relocation information
 					instruction = assembleInstruction(line.name, line.args, addr, symtab, defines, privilegeLevel)
-					
+
 					#get the offset where this instruction is placed at
 					offset = len(seg_data[addr.segment])
-					
-					#add reported imports to import table
-					i = 0
-					for importedSymbol in instruction.import_req:
-						if importedSymbol != None:
-							import_table.append(ImportEntry(
-								import_symbol=importedSymbol,
-								addr=SegAddr(addr.segment, offset+1+i)))
-							i+=1
 
-					#add reported relocations to relocation table
-					i = 0
-					for segment in instruction.reloc_req:
-						if segment != None:
+					#add relocation and import metainformation to linker information tables
+					for arg in instruction.arguments:
+						if arg["import"] != None:
+							import_table.append(ImportEntry(
+								import_symbol=arg["import"],
+								addr=SegAddr(addr.segment, offset+arg["offsetInInstruction"])))
+
+						if arg["relocation"] != None:
 							reloc_table.append(RelocEntry(
-								reloc_segment=segment,
-								addr=SegAddr(addr.segment, offset+1+i)))
-							i+=1
+								reloc_segment=arg["relocation"],
+								addr=SegAddr(addr.segment, offset+arg["offsetInInstruction"])))
 
 					#add instruction to current segment
 					seg_data[addr.segment].extend(list(instruction.op))

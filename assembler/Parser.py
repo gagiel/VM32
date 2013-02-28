@@ -184,6 +184,7 @@ class Parser(object):
 		''' number  : DEC
 					| HEX
 		'''
+		#FIXME: convert to 2s complement?
 		p[0] = Number(p[1])
 	
 	def p_error(self, p):

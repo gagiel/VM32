@@ -7,10 +7,15 @@ from Exceptions import InstructionError
 from ObjectFile import ImportEntry, RelocEntry
 
 class AssembledInstruction(object):
-	def __init__(self, op=None, import_req=None, reloc_req=None):
+	def __init__(self, op=None, arguments=None):
 		self.op = op
-		self.import_req = import_req
-		self.reloc_req = reloc_req
+		self.arguments = arguments
+
+	def __repr__(self):
+		str = "AssembledInstruction: \n"
+		str += "\tOp: %s\n" % self.op
+		str += "\tArgs: %s\n" % self.arguments
+		return str
 
 _INSTR = {
 	'add': {
@@ -206,9 +211,11 @@ _INSTR = {
 		'paramtypes': []
 	},
 	'vmresume': {
-		'nargs': 0,
+		'nargs': 1,
 		'op': OP_VMRESUME,
-		'paramtypes': []
+		'paramtypes': [
+			[Number]
+		]
 	},
 }
 
@@ -266,17 +273,28 @@ def assembleInstruction(name, args, addr, symtab, defines, privilegeLevel):
 	
 	operandValues = []
 	operandTypes = []
-	relocations = []
-	importedSymbols = []
 
 	#parse all arguments the instruction needs and gather the operand type, value, import and relocation information
+	arguments = []
+	i = 1
 	for n in range(instr['nargs']):
 		(operandType, operandValue, importedSymbol, relocation) = _parseAgumentType(args[n], symtab, defines)
+		operandTypes.append(operandType)
+		
 		if operandValue != None:
 			operandValues.append(operandValue)
-		operandTypes.append(operandType)
-		relocations.append(relocation)
-		importedSymbols.append(importedSymbol)
+
+			#add meta information to instruction if there is any
+			if relocation != None or importedSymbol != None:
+				arguments.append(
+					{
+						"offsetInInstruction": i,
+						"relocation": relocation,
+						"import": importedSymbol
+					}
+				)
+
+			i += 1
 
 	#create the instruction and operand sequence based on the number of arguments
 	if len(operandTypes) == 0:
@@ -294,7 +312,8 @@ def assembleInstruction(name, args, addr, symtab, defines, privilegeLevel):
 	assembled.extend(map(lambda x: struct.pack("<I", x), operandValues))
 
 	#put everything into a container object and return it for further processing
-	return AssembledInstruction(op=assembled, import_req=importedSymbols, reloc_req=relocations)
+	#return AssembledInstruction(op=assembled, import_req=importedSymbols, reloc_req=relocations)
+	return AssembledInstruction(op=assembled, arguments=arguments)
 
 def _parseAgumentType(arg, symtab, deftab):
 	#The argument is a symbolic name
@@ -326,6 +345,9 @@ def _parseAgumentType(arg, symtab, deftab):
 
 	#The argument is a number
 	elif isinstance(arg, Number):
+		if arg.val < 0 or arg.val > 0xFFFFFFFF:
+			raise InstructionError("Number must be between 0 and 0xFFFFFFFF")
+
 		return (PARAM_IMMEDIATE << 5, arg.val, None, None)
 
 	#The argument is a memory reference
