@@ -36,7 +36,7 @@ class Memory(object):
 			raise MemoryAddressOutOfBoundsException("Address {0} for write operation out of bounds".format(address))
 		
 		if(word > 0xFFFFFFFF or word < 0):
-			raise MemoryDataOutOfBoundsException("Data for write operation at address {0} out of bounds".format(word))
+			raise MemoryDataOutOfBoundsException("Data {0} for write operation at address {1} out of bounds".format(word, address))
 
 		self.memory[address] = word
 

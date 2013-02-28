@@ -230,7 +230,7 @@ _INSTR = {
 		'nargs': 1,
 		'op': OP_VMRESUME,
 		'paramtypes': [
-			[Number]
+			[Register, Id, Number, MemRef, DoubleMemRef],
 		]
 	},
 }

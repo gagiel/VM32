@@ -49,8 +49,19 @@ hang:
 	JMP hang
 
 vmStartup:
-	DIV r0, 0
-	JMP vmStartup
+	MOV r0, vmSayHello
+	CALL printString
+	HALT
+
+#r0 takes pointer to string to print
+printString:
+	CMP r0(0), 0
+	JZ end_reg
+	PRINT r0(0)
+	ADD r0, 1
+	JMP printString
+end_reg:
+	RET
 
 vm1CodeEnd:
 

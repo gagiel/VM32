@@ -18,8 +18,8 @@ startup:
 
 	MOV CR_SEGTBL, segementationTable
 
-	MOV r0, bootStr
-	CALL printString
+	#PUSH bootStr
+	#CALL printString
 
 	MOV r0, vmTable
 	ADD r0, 9
@@ -46,20 +46,26 @@ hvDivisionByZero:
 	HALT
 
 hvTrapHandler:
-	MOV r0, trapStr
-	CALL printString
+	#PUSH trapStr
+	#CALL printString
 
-	POP r0	#get VM ID
-	CALL printInteger
+	POP r30		#get VM ID
 
-	MOV r0, trapStr2
-	CALL printString
+	#PUSH r30	#and print it
+	#CALL printInteger
 
-	POP r0	#get Trap Reason
-	CALL printInteger
+	#PUSH trapStr2
+	#CALL printString
+
+	POP r0		#get Trap Reason
+	#PUSH r0
+	#CALL printInteger
 
 	#Jump into handler
 	CALL r0(hvTrapJumpTable)
+
+	#resume back into VM
+	VMRESUME r30
 
 	HALT
 
@@ -70,73 +76,93 @@ hvTimerInterrupt:
 ##########################################
 
 hvHandleSegmentViolation:
-	MOV r0, segViolStr
+	PUSH segViolStr
 	CALL printString
-	RET
+	HALT
 
 hvHandleInvalidInstruction:
-	MOV r0, invInstrStr
+	PUSH invInstrStr
 	CALL printString
-	RET
+	HALT
 
 handleDivisionByZero:
-	MOV r0, divByZeroStr
+	PUSH divByZeroStr
 	CALL printString
-	RET
+	HALT
 
 handleHvTrap:
-	MOV r0, vmtrapStr
+	PUSH vmtrapStr
 	CALL printString
-	RET
+	HALT
 
 hvHandleSoftwareInt:
-	MOV r0, softwareIntStr
+	PUSH softwareIntStr
 	CALL printString
-	RET
+	HALT
 
 hvHandlePrivilegeViolation:
-	MOV r0, privViolationStr
+	PUSH privViolationStr
 	CALL printString
-	RET
+	HALT
 
 hvHandleSpecialRegisterRead:
-	MOV r0, specialRegisterReadStr
+	PUSH specialRegisterReadStr
 	CALL printString
-	RET
+	HALT
 
 hvHandleSpecialRegisterWrite:
-	MOV r0, specialRegisterWriteStr
+	PUSH specialRegisterWriteStr
 	CALL printString
-	RET
+	HALT
 
 hvHandleHalt:
-	MOV r0, haltStr
+	PUSH haltStr
 	CALL printString
-	RET
+	HALT
 
 hvHandleHardwareAccess:
-	MOV r0, hardwareAccessStr
-	CALL printString
+	#PUSH hardwareAccessStr
+	#CALL printString
+
+	POP r0		#return pointer
+	POP r1		#get character to print
+	PUSH r0		#put return pointer back FIXME: basepointer!
+
+	PRINT r1	#print it
+
+	#modify return IP of VM to point to next instruction after the print #FIXME: make the IP point to next instruction
+	MOV r0, vmTable
+	ADD r0, 9
+	ADD r0(5), 2
+
 	RET
 
 hvHandleVmresume:
-	MOV r0, vmresumeStr
+	PUSH vmresumeStr
 	CALL printString
-	RET
+	HALT
 
 ##########################################
 
-#r0 takes pointer to string to print
+#first element on stack is pointer to string
 printString:
+	POP r1	#HACK, basepointer?
+	POP r0
+	PUSH r1
+nextChar:
 	CMP r0(0), 0
 	JZ end_reg
 	PRINT r0(0)
 	ADD r0, 1
-	JMP printString
+	JMP nextChar
 end_reg:
 	RET
 
 printInteger:
+	POP r1	#HACK, basepointer?
+	POP r0
+	PUSH r1
+
 	MOV r1, 28
 	MOV r2, 0xF0000000
 nextNibble:

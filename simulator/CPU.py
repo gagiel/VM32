@@ -110,8 +110,8 @@ class CPU(object):
 					ipadd += 1
 
 				elif operandType1 == Opcodes.PARAM_SPECIAL_REGISTER:
-					operand1 = self.state.getSpecialRegister(registerOperand1)
-					writebackFunction = lambda val: self.state.setSpecialRegister(registerOperand1, val)
+					operand1 = self.getSpecialRegister(registerOperand1)
+					writebackFunction = lambda val: self.setSpecialRegister(registerOperand1, val)
 
 				else:
 					self.logger.error("Unknown operand type for operand 1: %x", operandType1)
@@ -160,7 +160,7 @@ class CPU(object):
 					ipadd += 1
 
 				elif operandType2 == Opcodes.PARAM_SPECIAL_REGISTER:
-					operand2 = self.state.getSpecialRegister(registerOperand2)
+					operand2 = self.getSpecialRegister(registerOperand2)
 
 				else:
 					self.logger.error("Unknown operand type for operand 2: %x", operandType2)
@@ -168,9 +168,6 @@ class CPU(object):
 			except CPUSegmentViolationException, e:
 				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
 				return True
-
-
-		#TODO: if memory is involved, check segment violations
 
 		#handle opcode
 
@@ -247,13 +244,22 @@ class CPU(object):
 		#HALT
 		elif opcode == Opcodes.OP_HALT:
 			#print "Opcodes.OP_HALT"
-			return False
+			if not self.state.InVM:
+				return False
+			else:
+				self.raiseHypervisorTrap(Opcodes.HVTRAP_HALT)
+				return True
 
 		#PRINT
 		elif opcode == Opcodes.OP_PRINT:
 			#print "Opcodes.OP_PRINT"
-			sys.stdout.write(chr(operand1 & 0xFF))
-			sys.stdout.flush()
+			if not self.state.InVM:
+				sys.stdout.write(chr(operand1 & 0xFF))
+				sys.stdout.flush()
+			else:
+				#print "hw access, raising hvtrap"
+				self.raiseHypervisorTrap(Opcodes.HVTRAP_HARDWARE_ACCESS, [operand1 & 0xFF])
+				return True
 
 		#CMP
 		elif opcode == Opcodes.OP_CMP:
@@ -361,14 +367,13 @@ class CPU(object):
 
 		#VMRESUME
 		elif opcode == Opcodes.OP_VMRESUME:
-			#try:
-			self.state.IP += ipadd
-			self.state.saveHypervisorContext()
-			self.state.setVmContext(operand1)
-			#except CPUSegmentViolationException, e:
-			#	self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
+			if not self.state.InVM:
+				self.state.IP += ipadd
+				self.state.saveHypervisorContext()
+				self.state.setVmContext(operand1)
+			else:
+				self.raiseHypervisorTrap(Opcodes.HVTRAP_VMRESUME, [operand1])
 
-			#print "Opcodes.OP_VMRESUME"
 			return True
 
 		#Unknown - internal error
@@ -434,3 +439,15 @@ class CPU(object):
 		self.pushToStack(trapNumber)
 		self.pushToStack(currentvm)
 		self.state.IP = self.state.getResultingInterruptAddress() + Opcodes.INTR_HV_TRAP * 2
+
+	def setSpecialRegister(self, specialRegister, value):
+		if not self.state.InVM:
+			self.state.setSpecialRegister(specialRegister, value)
+		else:
+			self.raiseHypervisorTrap(Opcodes.HVTRAP_SPECIAL_REG_WRITE, [value, specialRegister])
+
+	def getSpecialRegister(self, specialRegister):
+		if not self.state.InVM:
+			return self.state.getSpecialRegister(specialRegister)
+		else:
+			self.raiseHypervisorTrap(Opcodes.HVTRAP_SPECIAL_REG_READ, [specialRegister])
