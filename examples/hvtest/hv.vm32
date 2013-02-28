@@ -7,8 +7,6 @@
 .GLOBAL hvTrapHandler
 .GLOBAL hvTimerInterrupt
 
-.define stuff, 0x10000
-
 startup:
 	MOV CR_CS, 0
 	MOV CR_DS, 1
@@ -48,13 +46,83 @@ hvDivisionByZero:
 	HALT
 
 hvTrapHandler:
-	PRINT 0x41
+	MOV r0, trapStr
+	CALL printString
+
+	POP r0	#get VM ID
+	CALL printInteger
+
+	MOV r0, trapStr2
+	CALL printString
+
+	POP r0	#get Trap Reason
+	CALL printInteger
+
+	#Jump into handler
+	CALL r0(hvTrapJumpTable)
+
 	HALT
 
 hvTimerInterrupt:
 	PRINT 0x45
 	HALT
 
+##########################################
+
+hvHandleSegmentViolation:
+	MOV r0, segViolStr
+	CALL printString
+	RET
+
+hvHandleInvalidInstruction:
+	MOV r0, invInstrStr
+	CALL printString
+	RET
+
+handleDivisionByZero:
+	MOV r0, divByZeroStr
+	CALL printString
+	RET
+
+handleHvTrap:
+	MOV r0, vmtrapStr
+	CALL printString
+	RET
+
+hvHandleSoftwareInt:
+	MOV r0, softwareIntStr
+	CALL printString
+	RET
+
+hvHandlePrivilegeViolation:
+	MOV r0, privViolationStr
+	CALL printString
+	RET
+
+hvHandleSpecialRegisterRead:
+	MOV r0, specialRegisterReadStr
+	CALL printString
+	RET
+
+hvHandleSpecialRegisterWrite:
+	MOV r0, specialRegisterWriteStr
+	CALL printString
+	RET
+
+hvHandleHalt:
+	MOV r0, haltStr
+	CALL printString
+	RET
+
+hvHandleHardwareAccess:
+	MOV r0, hardwareAccessStr
+	CALL printString
+	RET
+
+hvHandleVmresume:
+	MOV r0, vmresumeStr
+	CALL printString
+	RET
 
 ##########################################
 
@@ -68,6 +136,29 @@ printString:
 end_reg:
 	RET
 
+printInteger:
+	MOV r1, 28
+	MOV r2, 0xF0000000
+nextNibble:
+	MOV r3, numDigits
+	MOV r4, r0
+
+	AND r4, r2	#mask nibble
+	SHR r4, r1	#shift nibble right
+
+	ADD r3, r4	#get and print char
+	PRINT r3(0)
+
+	SHR r2, 4	#move mask to next nibble
+	SUB r1, 4	#adjust position
+
+	CMP r1, 28	#End?
+	JGE done
+	JMP nextNibble
+done:
+	PRINT 0xa
+	RET
+
 
 codeEnd:
 
@@ -78,6 +169,50 @@ startOfData:
 
 bootStr:
 	.string "VM32 Hypervisor booting\n"
+trapStr:
+	.string "Got HV TRAP from VM "
+trapStr2:
+	.string "Reason is "
+
+segViolStr:
+	.string "Segmentation violation\n"
+invInstrStr:
+	.string "Invalid Instruction\n"
+divByZeroStr:
+	.string "Divion by zero\n"
+vmtrapStr:
+	.string "HV Trap in VM\n"
+softwareIntStr:
+	.string "Software Interrupt\n"
+privViolationStr:
+	.string "Privilege Violation\n"
+specialRegisterReadStr:
+	.string "Special Register Read\n"
+specialRegisterWriteStr:
+	.string "Special Register Write\n"
+haltStr:
+	.string "VM halted itself\n"
+hardwareAccessStr:
+	.string "VM attempted hardware access\n"
+vmresumeStr:
+	.string "VM attempted VMRESUME opcode\n"
+
+
+numDigits:
+	.string "0123456789ABCDEF"
+
+hvTrapJumpTable:
+	.word hvHandleSegmentViolation
+	.word hvHandleInvalidInstruction
+	.word handleDivisionByZero
+	.word handleHvTrap
+	.word hvHandleSoftwareInt
+	.word hvHandlePrivilegeViolation
+	.word hvHandleSpecialRegisterRead
+	.word hvHandleSpecialRegisterWrite
+	.word hvHandleHalt
+	.word hvHandleHardwareAccess
+	.word hvHandleVmresume
 
 
 segementationTable:

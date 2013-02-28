@@ -1,7 +1,7 @@
 TARGET = hv.bin
 OBJECTS = vectors.obj hv.obj vm1.obj
 
-AS := ../../assemble.py 
+AS := ../../assemble.py
 LD := ../../link.py
 
 all: $(TARGET)

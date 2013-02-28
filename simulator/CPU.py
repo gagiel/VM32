@@ -129,7 +129,7 @@ class CPU(object):
 					ipadd += 1
 
 				elif operandType2 == Opcodes.PARAM_REGISTER:
-					operand2 = self.state.setRegister(registerOperand2)
+					operand2 = self.state.getRegister(registerOperand2)
 
 				elif operandType2 == Opcodes.PARAM_MEMORY_SINGLE_DS:
 					operand2addr = self.memory.readWord(self.state.getResultingInstructionAddress() + ipadd)
@@ -224,6 +224,16 @@ class CPU(object):
 		elif opcode == Opcodes.OP_NOT:
 			#print "OP_NOT"
 			writebackValue = operand1 ^ operand2
+
+		#SHL
+		elif opcode == Opcodes.OP_SHL:
+			#print "OP_SHL"
+			writebackValue = (operand1 << operand2) & 0xFFFFFFFF
+
+		#SHR
+		elif opcode == Opcodes.OP_SHR:
+			#print "OP_SHR"
+			writebackValue = (operand1 >> operand2) & 0xFFFFFFFF
 
 		#MOV
 		elif opcode == Opcodes.OP_MOV:
@@ -393,19 +403,34 @@ class CPU(object):
 		self.state.incrementStackPointer()
 		return stackValue
 
-	def raiseSegmentViolation(self, segmentIndex):
-		self.raiseInterrupt(INTR_SEG_VIOL, self.state.IP, [segmentIndex])
+	#def raiseSegmentViolation(self, segmentIndex):
+	#	self.raiseInterrupt(INTR_SEG_VIOL, self.state.IP, [segmentIndex])
 
 	def raiseInterrupt(self, interruptNumber, returnIp, additionalStackValues = []):
 		if interruptNumber > 32:
 			raise SimulatorError("Interrupt number is out of bounds")
-
-		#FIXME: move interrupt vectors to start of current CS
 
 		if not self.state.InVM:
 			map(lambda x: self.pushToStack(x), additionalStackValues)
 			self.pushToStack(returnIp)
 			self.state.IP = self.state.getResultingInterruptAddress() + interruptNumber * 2
 		else:
-			#TODO restore HV context via vmtbl and raise hypervisor trap
-			raise Exception("interrupt in VM not implemented")
+			softwareInterruptNumber = 0
+			if interruptNumber >= Opcodes.INTR_SOFTWARE:
+				softwareInterruptNumber = interruptNumber - Opcodes.INTR_SOFTWARE
+				additionalStackValues = [softwareInterruptNumber]
+				interruptNumber = INTR_SOFTWARE
+
+			hvTrapNumber = Opcodes.INTR_TO_HVTRAP[interruptNumber]
+			self.raiseHypervisorTrap(hvTrapNumber, additionalStackValues)
+
+	def raiseHypervisorTrap(self, trapNumber, additionalStackValues = []):
+		currentvm = self.state.VmID
+		self.state.saveVmContext(currentvm)	#save current vm state
+		self.state.setVmContext(0)	#switch to hypervisor state
+		self.state.InVM = False		#we are no longer inside of a VM
+
+		map(lambda x: self.pushToStack(x), additionalStackValues)
+		self.pushToStack(trapNumber)
+		self.pushToStack(currentvm)
+		self.state.IP = self.state.getResultingInterruptAddress() + Opcodes.INTR_HV_TRAP * 2

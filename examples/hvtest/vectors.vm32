@@ -24,111 +24,33 @@ vec_reset:
 	JMP hvTimerInterrupt
 
 
-
 #0x06-0x20
-#INT 0
-	NOP
-	NOP
-
-#INT 1
-	NOP
-	NOP
-
-#INT 2
-	NOP
-	NOP
-
-#INT 3
-	NOP
-	NOP
-
-#INT 4
-	NOP
-	NOP
-
-#INT 5
-	NOP
-	NOP
-
-#INT 6
-	NOP
-	NOP
-
-#INT 7
-	NOP
-	NOP
-
-#INT 8
-	NOP
-	NOP
-
-#INT 9
-	NOP
-	NOP
-
-#INT 10
-	NOP
-	NOP
-
-#INT 11
-	NOP
-	NOP
-
-#INT 12
-	NOP
-	NOP
-
-#INT 13
-	NOP
-	NOP
-
-#INT 14
-	NOP
-	NOP
-
-#INT 15
-	NOP
-	NOP
-
-#INT 16
-	NOP
-	NOP
-
-#INT 17
-	NOP
-	NOP
-
-#INT 18
-	NOP
-	NOP
-
-#INT 19
-	NOP
-	NOP
-
-#INT 20
-	NOP
-	NOP
-
-#INT 21
-	NOP
-	NOP
-
-#INT 22
-	NOP
-	NOP
-
-#INT 23
-	NOP
-	NOP
-
-#INT 24
-	NOP
-	NOP
-
-#INT 25
-	NOP
-	NOP
+JMP hang #INT 0
+JMP hang #INT 1
+JMP hang #INT 2
+JMP hang #INT 3
+JMP hang #INT 4
+JMP hang #INT 5
+JMP hang #INT 6
+JMP hang #INT 7
+JMP hang #INT 8
+JMP hang #INT 9
+JMP hang #INT 10
+JMP hang #INT 11
+JMP hang #INT 12
+JMP hang #INT 13
+JMP hang #INT 14
+JMP hang #INT 15
+JMP hang #INT 16
+JMP hang #INT 17
+JMP hang #INT 18
+JMP hang #INT 19
+JMP hang #INT 20
+JMP hang #INT 21
+JMP hang #INT 22
+JMP hang #INT 23
+JMP hang #INT 24
+JMP hang #INT 25
 
 hang:
 	HALT

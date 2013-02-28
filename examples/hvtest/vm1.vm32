@@ -49,6 +49,7 @@ hang:
 	JMP hang
 
 vmStartup:
+	DIV r0, 0
 	JMP vmStartup
 
 vm1CodeEnd:

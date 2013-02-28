@@ -91,6 +91,22 @@ _INSTR = {
 			[Id, Register, Number, MemRef, DoubleMemRef],
 		]
 	},
+	'shl': {
+		'nargs': 2,
+		'op': OP_SHL,
+		'paramtypes': [
+			[Register, MemRef, DoubleMemRef],
+			[Id, Register, Number, MemRef, DoubleMemRef],
+		]
+	},
+	'shr': {
+		'nargs': 2,
+		'op': OP_SHR,
+		'paramtypes': [
+			[Register, MemRef, DoubleMemRef],
+			[Id, Register, Number, MemRef, DoubleMemRef],
+		]
+	},
 
 	'mov': {
 		'nargs': 2,

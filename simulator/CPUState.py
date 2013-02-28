@@ -155,7 +155,7 @@ class CPUState(object):
 	def setGreaterEqualFlag(self):
 		self.Flags |= (1<<1)
 
-	def clearGreaterEqual(self):
+	def clearGreaterEqualFlag(self):
 		self.Flags &= ~(1<<1)
 
 	def getGreaterEqualFlag(self):
@@ -284,10 +284,12 @@ class CPUState(object):
 
 	def saveHypervisorContext(self):
 		#overwrite first entry (always hypervisor) with current state
+		self.saveVmContext(0)
 
+	def saveVmContext(self, vmid):
 		#FIXME: error if vmtbl == 0
 
-		address = self.VmTbl
+		address = self.VmTbl + 9*vmid
 		self.memory.writeWord(address, self.CS)
 		address += 1
 		self.memory.writeWord(address, self.DS)
@@ -311,7 +313,7 @@ class CPUState(object):
 
 	def setVmContext(self, vmid):
 		#TODO: check index bounds of vmid
-		self._parseNewSegTbl()
+		self._parseNewVmTbl()
 
 		self.InVM = True
 		self.VmID = vmid
