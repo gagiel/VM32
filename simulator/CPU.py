@@ -29,7 +29,7 @@ class CPU(object):
 			curWord = self.memory.readBinary(self.state.getResultingInstructionAddress())
 			(opcode, privlvl, operandType1, operandType2) = struct.unpack("<BBBB", curWord)
 		except CPUSegmentViolationException, e:
-			self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+			self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
 			return True
 
 		registerOperand1 = operandType1 & 0x1F
@@ -41,13 +41,13 @@ class CPU(object):
 		#check wether instruction itself exists and raise exception if not
 		if not doesInstructionExist(opcode):
 			self.logger.debug("Unknown instruction at physical 0x%x", self.state.IP)
-			self.raiseInterrupt(Opcodes.INTR_INVALID_INSTR * 2, self.state.IP)
+			self.raiseInterrupt(Opcodes.INTR_INVALID_INSTR, self.state.IP)
 			return True
 
 		#check wether the operand types encoded in the instruction word are valid for the given opcode and raise exception if not
 		if not areParametersValid(opcode, operandType1, operandType2):
 			self.logger.debug("Invalid parameter type for instruction 0x%x at physical 0x%x", opcode, self.state.IP)
-			self.raiseInterrupt(Opcodes.INTR_INVALID_INSTR * 2, self.state.IP)
+			self.raiseInterrupt(Opcodes.INTR_INVALID_INSTR, self.state.IP)
 			return True
 
 		if privlvl < self.state.privLvl:
@@ -118,7 +118,7 @@ class CPU(object):
 					return False
 
 			except CPUSegmentViolationException, e:
-				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
 				return True
 		
 		#decode second operand type, fetch it and prepare a writeback closure
@@ -166,7 +166,7 @@ class CPU(object):
 					self.logger.error("Unknown operand type for operand 2: %x", operandType2)
 					return False
 			except CPUSegmentViolationException, e:
-				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
 				return True
 
 
@@ -195,7 +195,7 @@ class CPU(object):
 			#print "Opcodes.OP_DIV"
 			if operand2 == 0:
 				self.logger.debug("Division by zero occured at physical 0x%x", self.state.IP)
-				self.raiseInterrupt(Opcodes.INTR_DIV_BY_ZERO * 2, self.state.IP)
+				self.raiseInterrupt(Opcodes.INTR_DIV_BY_ZERO, self.state.IP)
 				return True
 
 			writebackValue = (operand1 / operand2) & 0xFFFFFFFF
@@ -301,7 +301,7 @@ class CPU(object):
 				#set new IP
 				self.state.IP = operand1
 			except CPUSegmentViolationException, e:
-				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
 
 			return True
 
@@ -311,7 +311,7 @@ class CPU(object):
 			try:
 				self.state.IP = self.popFromStack()
 			except CPUSegmentViolationException, e:
-				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
 
 			return True
 		
@@ -320,7 +320,7 @@ class CPU(object):
 			try:
 				self.pushToStack(operand1)
 			except CPUSegmentViolationException, e:
-				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
 				return True
 
 		#POP
@@ -328,15 +328,15 @@ class CPU(object):
 			try:
 				writebackValue = self.popFromStack()
 			except CPUSegmentViolationException, e:
-				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
 				return True
 
 		#INT
 		elif opcode == Opcodes.OP_INT:
 			try:
-				self.raiseInterrupt((operand1 + Opcodes.INTR_SOFTWARE) * 2, self.state.IP + ipadd)
+				self.raiseInterrupt((operand1 + Opcodes.INTR_SOFTWARE), self.state.IP + ipadd)
 			except CPUSegmentViolationException, e:
-				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
 
 			return True
 
@@ -345,7 +345,7 @@ class CPU(object):
 			try:
 				self.state.IP = self.popFromStack()
 			except CPUSegmentViolationException, e:
-				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
 
 			return True
 
@@ -354,7 +354,7 @@ class CPU(object):
 			#try:
 			self.state.setVmContext(operand1)
 			#except CPUSegmentViolationException, e:
-			#	self.raiseInterrupt(Opcodes.INTR_SEG_VIOL * 2, self.state.IP, [e.segment, e.offset])
+			#	self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
 
 			#print "Opcodes.OP_VMRESUME"
 			return True
@@ -392,7 +392,7 @@ class CPU(object):
 		return stackValue
 
 	def raiseSegmentViolation(self, segmentIndex):
-		self.raiseInterrupt(INTR_SEG_VIOL * 2, self.state.IP, [segmentIndex])
+		self.raiseInterrupt(INTR_SEG_VIOL, self.state.IP, [segmentIndex])
 
 	def raiseInterrupt(self, interruptNumber, returnIp, additionalStackValues = []):
 		if interruptNumber > 32:
@@ -403,7 +403,7 @@ class CPU(object):
 		if not self.state.InVM:
 			map(lambda x: self.pushToStack(x), additionalStackValues)
 			self.pushToStack(returnIp)
-			self.state.IP = self.state.getResultingCodeAddress(interruptNumber)
+			self.state.IP = self.state.getResultingInterruptAddress() + interruptNumber * 2
 		else:
 			#TODO restore HV context via vmtbl and raise hypervisor trap
 			raise Exception("interrupt in VM not implemented")

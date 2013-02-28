@@ -70,6 +70,12 @@ class CPUState(object):
 
 			#return self.segments[self.CS].start + offset
 
+	def getResultingInterruptAddress(self):
+		if len(self.segments) == 0:
+			return 0x0
+		else:
+			return self.segments[self.CS].start
+
 	def getResultingDataAddress(self, offset):
 		if len(self.segments) == 0:
 			return offset
