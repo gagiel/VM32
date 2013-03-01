@@ -110,7 +110,7 @@ class DebuggerShell(cmd.Cmd):
 	def do_stack(self, line):
 		#FIXME: this is totally hacked
 		try:
-			addr = hex(self.cpu.state.SP)
+			addr = hex(self.cpu.state.getRegister(30))
 			val = parseArgs(line)[0]
 			self.do_read(addr + " " + str(val))
 		except (ValueError, IndexError):
@@ -167,8 +167,8 @@ class DebuggerShell(cmd.Cmd):
 
 	def do_vmtbl(self, line):
 		for (idx, vm) in enumerate(self.cpu.state.vms):
-			print "VM %d - CS: %d - DS: %d - ES: %d - SS: %d - RS: %d - IP: 0x%08x - SP: 0x%08x - Flags: 0x%08x - PrivLvl: 0x%02x" \
-				% (idx, vm.CS, vm.DS, vm.ES, vm.SS, vm.RS, vm.IP, vm.SP, vm.Flags, vm.privLvl)
+			print "VM %d - CS: %d - DS: %d - ES: %d - SS: %d - RS: %d - IP: 0x%08x - Flags: 0x%08x - PrivLvl: 0x%02x" \
+				% (idx, vm.CS, vm.DS, vm.ES, vm.SS, vm.RS, vm.IP, vm.Flags, vm.privLvl)
 
 	def do_reset(self, line):
 		print "Resetting CPU"
@@ -223,7 +223,6 @@ def getRegisterStringRepresentation(state):
 	string += "\n"
 
 	string += "IP: 0x%08x\n" % state.IP
-	string += "SP: 0x%08x\n" % state.SP
 
 	string += "\n"
 

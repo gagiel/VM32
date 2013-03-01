@@ -4,7 +4,7 @@ from Exceptions import CPUStateError, CPUStateSegTblFaultyError, CPUSegmentViola
 from collections import namedtuple
 
 SegmentEntry = namedtuple("SegmentEntry", ["start", "limit", "type", "privLvl"])
-VmEntry = namedtuple("VmEntry", ["CS", "DS", "ES", "SS", "RS", "IP", "SP", "Flags", "privLvl"])
+VmEntry = namedtuple("VmEntry", ["CS", "DS", "ES", "SS", "RS", "IP", "Flags", "privLvl"])
 
 class CPUState(object):
 	def __init__(self):
@@ -20,9 +20,8 @@ class CPUState(object):
 		self.SS = 0
 		self.RS = 0
 
-		#Stack- and Instruction-Pointer
+		#Instruction-Pointer
 		self.IP = 0
-		self.SP = 0
 
 		#Flags
 		self.Flags = 0
@@ -107,17 +106,18 @@ class CPUState(object):
 
 	def getResultingStackAddress(self):
 		if len(self.segments) == 0:
-			return self.SP
+			return self.getRegister(30)
 		else:
 			#if self.segments[self.SS].start + self.SS > self.segments[self.SS].limit or self.SS < 0:
 			#	raise CPUSegmentViolationException(SEGMENT_STACK, self.SS)
 
 			#return self.segments[self.SS].start + self.SP
+			sp = self.getRegister(30)
+			
+			if sp < self.segments[self.SS].start or sp > self.segments[self.SS].limit:
+				raise CPUSegmentViolationException(SEGMENT_STACK, sp)
 
-			if self.SP < self.segments[self.SS].start or self.SP > self.segments[self.SS].limit:
-				raise CPUSegmentViolationException(SEGMENT_STACK, self.SP)
-
-			return self.SP
+			return sp
 
 	def getRegister(self, reg):
 		if reg < 0 or reg > 30:
@@ -164,14 +164,18 @@ class CPUState(object):
 	def decrementStackPointer(self):
 		#TODO check segment limits
 
-		self.SP -= 1
-		self.SP &= 0xFFFFFFFF
+		sp = self.getRegister(30)
+		sp -= 1
+		sp &= 0xFFFFFFFF
+		self.setRegister(30, sp)
 
 	def incrementStackPointer(self):
 		#TODO check segment limits
 		
-		self.SP += 1
-		self.SP &= 0xFFFFFFFF
+		sp = self.getRegister(30)
+		sp += 1
+		sp &= 0xFFFFFFFF
+		self.setRegister(30, sp)
 
 	def getSpecialRegister(self, index):
 		if index < 0 or index > len(SPECIALREGS):
@@ -183,8 +187,6 @@ class CPUState(object):
 			return self.SegTbl
 		elif index == SPECIALREG_VMTBL:
 			return self.VmTbl
-		elif index == SPECIALREG_STACKPTR:
-			return self.SP
 		elif index == SPECIALREG_CS:
 			return self.CS
 		elif index == SPECIALREG_DS:
@@ -212,8 +214,6 @@ class CPUState(object):
 		elif index == SPECIALREG_VMTBL:
 			self.VmTbl = value
 			self._parseNewVmTbl()
-		elif index == SPECIALREG_STACKPTR:
-			self.SP = value
 		elif index == SPECIALREG_CS:
 			self.CS = value
 		elif index == SPECIALREG_DS:
@@ -269,18 +269,16 @@ class CPUState(object):
 			address += 1
 			ip = self.memory.readWord(address)
 			address += 1
-			sp = self.memory.readWord(address)
-			address += 1
 			flags = self.memory.readWord(address)
 			address += 1
 			privLvl = self.memory.readWord(address)
 			address += 1
 
-			if cs == 0xFFFFFFFF and ds == 0xFFFFFFFF and es == 0xFFFFFFFF and ss == 0xFFFFFFFF and rs == 0xFFFFFFFF and ip == 0xFFFFFFFF and sp == 0xFFFFFFFF and flags == 0xFFFFFFFF and privLvl == 0xFFFFFFFF:
+			if cs == 0xFFFFFFFF and ds == 0xFFFFFFFF and es == 0xFFFFFFFF and ss == 0xFFFFFFFF and rs == 0xFFFFFFFF and ip == 0xFFFFFFFF and flags == 0xFFFFFFFF and privLvl == 0xFFFFFFFF:
 				break
 
 			#FIXME: check if segment selectors are not out of bounds
-			self.vms.append(VmEntry(cs, ds, es, ss, rs, ip, sp, flags, privLvl))
+			self.vms.append(VmEntry(cs, ds, es, ss, rs, ip, flags, privLvl))
 
 	def saveHypervisorContext(self):
 		#overwrite first entry (always hypervisor) with current state
@@ -289,7 +287,7 @@ class CPUState(object):
 	def saveVmContext(self, vmid):
 		#FIXME: error if vmtbl == 0
 
-		address = self.VmTbl + 9*vmid
+		address = self.VmTbl + 8*vmid
 		self.memory.writeWord(address, self.CS)
 		address += 1
 		self.memory.writeWord(address, self.DS)
@@ -301,8 +299,6 @@ class CPUState(object):
 		self.memory.writeWord(address, self.RS)
 		address += 1
 		self.memory.writeWord(address, self.IP)
-		address += 1
-		self.memory.writeWord(address, self.SP)
 		address += 1
 		self.memory.writeWord(address, self.Flags)
 		address += 1
@@ -323,6 +319,5 @@ class CPUState(object):
 		self.RS = self.vms[vmid].RS
 		self.SS = self.vms[vmid].SS
 		self.IP = self.vms[vmid].IP
-		self.SP = self.vms[vmid].SP
 		self.Flags = self.vms[vmid].Flags
 		self.privLvl = self.vms[vmid].privLvl

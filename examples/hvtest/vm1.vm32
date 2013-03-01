@@ -49,6 +49,8 @@ hang:
 	JMP hang
 
 vmStartup:
+	MOV r30, vm1StackEnd
+
 	MOV r0, vmSayHello
 	CALL printString
 	HALT
