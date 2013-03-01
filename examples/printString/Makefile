@@ -7,12 +7,12 @@ LD := ../../link.py
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(LD) -o $@ $^
+	$(LD) -o $@ -m $@.map $^
 
 %.obj: %.vm32
 	$(AS) -o $@ $<
 
 clean:
-	rm -f *.obj *.bin
+	rm -f *.obj *.bin *.map
 
 .PHONY: clean all

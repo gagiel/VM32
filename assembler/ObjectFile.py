@@ -11,9 +11,10 @@ class ObjectFile(object):
 		self.export_table = []
 		self.import_table = []
 		self.reloc_table = []
+		self.symbol_table = []
 
 	@classmethod
-	def fromAssembler(cls, seg_data, export_table, import_table, reloc_table):
+	def fromAssembler(cls, seg_data, export_table, import_table, reloc_table, symbol_table):
 		obj = cls()
 		
 		#sanity checks for supplied types
@@ -25,6 +26,7 @@ class ObjectFile(object):
 		obj.export_table = export_table
 		obj.import_table = import_table
 		obj.reloc_table = reloc_table
+		obj.symbol_table = symbol_table
 
 		return obj
 
@@ -34,4 +36,5 @@ class ObjectFile(object):
 		str += "\texport_table: %s\n" % self.export_table
 		str += "\timport_table: %s\n" % self.import_table
 		str += "\treloc_table: %s\n" % self.reloc_table
+		str += "\tsymbol_table: %s\n" % self.symbol_table
 		return str

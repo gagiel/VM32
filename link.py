@@ -10,6 +10,7 @@ from linker.Linker import Linker
 def main(argc, argv):
 	parser = argparse.ArgumentParser(description='VM32 Linker')
 	parser.add_argument('-d', '--debug', action='store_true', dest='debug', help='Display debug information (DEBUG)')
+	parser.add_argument('-m', '--map', action='store', nargs=1, dest='mapFileName', help='Map filename', metavar='mapFileName', required=False)
 
 	parser.add_argument('-o', '--output', action='store', nargs=1, dest='outFileName', help='Output filename', metavar="outFileName", required=False)
 	parser.add_argument('inputFiles', metavar='input file', nargs='+', type=argparse.FileType('r'), help='Input files to link into an executable')
@@ -24,13 +25,6 @@ def main(argc, argv):
 	logger = logging.getLogger('Linker Frontend')
 
 	try:
-		#create and truncate output file
-		if arguments.outFileName != None:
-			outputFile = open(arguments.outFileName[0], 'w+')
-		else:
-			outputFile = open('out.bin', 'w+')
-		logger.debug("Writing to file %s", outputFile.name)
-
 		#load object files
 		objectFiles = []
 		for file in arguments.inputFiles:
@@ -38,14 +32,33 @@ def main(argc, argv):
 			objectFiles.append(pickle.load(file))
 		
 		linker = Linker()
-		image = linker.link(objectFiles)
+		image, symboltables = linker.link(objectFiles)
 
+		#build a binary string out of the list
 		binaryString = ""
 		for word in image:
 			binaryString += word
 
+		#create and truncate output file
+		if arguments.outFileName != None:
+			outputFile = open(arguments.outFileName[0], 'w+')
+		else:
+			outputFile = open('out.bin', 'w+')
+		logger.debug("Writing to file %s", outputFile.name)
+
+		#write image to file
 		outputFile.write(binaryString)
 		outputFile.close()
+
+		#write the map file
+		if arguments.mapFileName != None:
+			mapFile = open(arguments.mapFileName[0], 'w+')
+			for idx, sourceFile in enumerate(arguments.inputFiles):
+				mapFile.write("#%s\n" % sourceFile.name)
+				for symbol in symboltables[idx].iterkeys():
+					mapFile.write("%s %x\n" % (symbol, symboltables[idx][symbol]))
+				mapFile.write("\n")
+			mapFile.close()
 
 	except IOError, e:
 		logger.error(e)

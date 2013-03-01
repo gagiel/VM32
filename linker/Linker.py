@@ -35,9 +35,13 @@ class Linker(object):
 
 		self.logger.debug("Building executable image")
 		image = self._build_memory_image(objectFiles, segment_map, total_size)
-		self.logger.debug("Finished buildinng executable image")
+		self.logger.debug("Finished building executable image")
+
+		self.logger.debug("Building final symbol table")
+		symboltables = self._build_symbol_tables(objectFiles, segment_map)
+		self.logger.debug("Finished dbilding final symbol table")
 		
-		return image
+		return image, symboltables
 
 	def _build_memory_image(self, object_files, segment_map, total_size):
 		SENTINEL = -999
@@ -59,6 +63,21 @@ class Linker(object):
 			assert image[i] != SENTINEL, 'at %d' % i
 
 		return image
+
+	def _build_symbol_tables(self, object_files, segment_map):
+		symbol_tables = []
+
+		for idx, obj in enumerate(object_files):
+			symbol_table = {}
+
+			for symbol in obj.symbol_table.iterkeys():
+				segment = obj.symbol_table[symbol].segment
+				offset = obj.symbol_table[symbol].offset
+				symbol_table[symbol] = offset + segment_map[idx][segment]
+
+			symbol_tables.append(symbol_table)
+
+		return symbol_tables
 
 	def _resolve_relocations(self, object_files, segment_map):
 		for idx, obj in enumerate(object_files):

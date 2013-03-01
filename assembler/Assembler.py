@@ -227,7 +227,8 @@ class Assembler(object):
 			seg_data=seg_data,
 			export_table=export_table,
 			import_table=import_table,
-			reloc_table=reloc_table)
+			reloc_table=reloc_table,
+			symbol_table=symtab)
 
 	def _validate_args(self, line, expected_arguments):
 		if len(expected_arguments) != len(line.args):
