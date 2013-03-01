@@ -347,6 +347,31 @@ class CPU(object):
 				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
 				return True
 
+		#ENTER
+		elif opcode == Opcodes.OP_ENTER:
+			try:
+				self.pushToStack(self.state.getRegister(29))			#push basepointer
+				self.state.setRegister(29, self.state.getRegister(30))	#set new basepointer
+			except CPUSegmentViolationException, e:
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
+				return True
+
+		#LEAVE
+		elif opcode == Opcodes.OP_LEAVE:
+			try:
+				self.state.setRegister(29, self.popFromStack())
+			except CPUSegmentViolationException, e:
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
+				return True
+
+		#GETARGUMENT
+		elif opcode == Opcodes.OP_GETARGUMENT:
+			try:
+				writebackValue = self.memory.readWord(self.state.getRegister(29) + 2 + operand2)
+			except CPUSegmentViolationException, e:
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
+				return True
+
 		#INT
 		elif opcode == Opcodes.OP_INT:
 			try:

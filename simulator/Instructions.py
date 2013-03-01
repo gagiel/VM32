@@ -193,6 +193,24 @@ _INSTR = {
 			[PARAM_REGISTER, PARAM_IMMEDIATE, PARAM_MEMORY_SINGLE_DS, PARAM_MEMORY_SINGLE_ES, PARAM_MEMORY_DOUBLE_DS, PARAM_MEMORY_DOUBLE_ES],
 		]
 	},
+	OP_ENTER: {
+		'nargs': 0,
+		'name': 'ENTER',
+		'paramtypes': []
+	},
+	OP_LEAVE: {
+		'nargs': 0,
+		'name': 'LEAVE',
+		'paramtypes': []
+	},
+	OP_GETARGUMENT: {
+		'nargs': 2,
+		'name': 'GETARGUMENT',
+		'paramtypes': [
+			[PARAM_REGISTER, PARAM_IMMEDIATE, PARAM_MEMORY_SINGLE_DS, PARAM_MEMORY_SINGLE_ES, PARAM_MEMORY_DOUBLE_DS, PARAM_MEMORY_DOUBLE_ES],
+			[PARAM_IMMEDIATE],
+		]
+	},
 
 
 	OP_INT: {

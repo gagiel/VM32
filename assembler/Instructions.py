@@ -210,7 +210,24 @@ _INSTR = {
 			[Register, Id, Number, MemRef, DoubleMemRef],
 		]
 	},
-
+	'enter': {
+		'nargs': 0,
+		'op': OP_ENTER,
+		'paramtypes': []
+	},
+	'leave': {
+		'nargs': 0,
+		'op': OP_LEAVE,
+		'paramtypes': []
+	},
+	'getargument': {
+		'nargs': 2,
+		'op': OP_GETARGUMENT,
+		'paramtypes': [
+			[Register, MemRef, DoubleMemRef],
+			[Id, Number],
+		]
+	},
 
 	'int': {
 		'nargs': 1,

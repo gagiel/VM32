@@ -19,6 +19,7 @@ startup:
 
 	#PUSH bootStr
 	#CALL printString
+	#ADD r30, 1						#remove argument from stack
 
 	MOV r0, vmTable
 	ADD r0, 8
@@ -46,24 +47,28 @@ hvDivisionByZero:
 hvTrapHandler:
 	#PUSH trapStr
 	#CALL printString
+	#ADD r30, 1
 
-	POP r29		#get VM ID
+	POP r10		#get VM ID
 
-	#PUSH r29	#and print it
+	#PUSH r10	#and print it
 	#CALL printInteger
+	#ADD r30, 1
 
 	#PUSH trapStr2
 	#CALL printString
+	#ADD r30, 1
 
 	POP r0		#get Trap Reason
 	#PUSH r0
 	#CALL printInteger
+	#ADD r30, 1
 
 	#Jump into handler
 	CALL r0(hvTrapJumpTable)
 
 	#resume back into VM
-	VMRESUME r29
+	VMRESUME r10
 
 	HALT
 
@@ -76,56 +81,65 @@ hvTimerInterrupt:
 hvHandleSegmentViolation:
 	PUSH segViolStr
 	CALL printString
+	ADD r30, 1
 	HALT
 
 hvHandleInvalidInstruction:
 	PUSH invInstrStr
 	CALL printString
+	ADD r30, 1
 	HALT
 
 handleDivisionByZero:
 	PUSH divByZeroStr
 	CALL printString
+	ADD r30, 1
 	HALT
 
 handleHvTrap:
 	PUSH vmtrapStr
 	CALL printString
+	ADD r30, 1
 	HALT
 
 hvHandleSoftwareInt:
 	PUSH softwareIntStr
 	CALL printString
+	ADD r30, 1
 	HALT
 
 hvHandlePrivilegeViolation:
 	PUSH privViolationStr
 	CALL printString
+	ADD r30, 1
 	HALT
 
 hvHandleSpecialRegisterRead:
 	PUSH specialRegisterReadStr
 	CALL printString
+	ADD r30, 1
 	HALT
 
 hvHandleSpecialRegisterWrite:
 	PUSH specialRegisterWriteStr
 	CALL printString
+	ADD r30, 1
 	HALT
 
 hvHandleHalt:
 	PUSH haltStr
 	CALL printString
+	ADD r30, 1
 	HALT
 
 hvHandleHardwareAccess:
+	ENTER
+
 	#PUSH hardwareAccessStr
 	#CALL printString
+	#ADD r30, 1
 
-	POP r0		#return pointer
-	POP r1		#get character to print
-	PUSH r0		#put return pointer back FIXME: basepointer!
-
+	GETARGUMENT r1, 0
 	PRINT r1	#print it
 
 	#modify return IP of VM to point to next instruction after the print #FIXME: make the IP point to next instruction
@@ -133,6 +147,7 @@ hvHandleHardwareAccess:
 	ADD r0, 8
 	ADD r0(5), 2
 
+	LEAVE
 	RET
 
 hvHandleVmresume:
@@ -144,9 +159,8 @@ hvHandleVmresume:
 
 #first element on stack is pointer to string
 printString:
-	POP r1	#HACK, basepointer?
-	POP r0
-	PUSH r1
+	ENTER
+	GETARGUMENT r0, 0
 nextChar:
 	CMP r0(0), 0
 	JZ end_reg
@@ -154,6 +168,7 @@ nextChar:
 	ADD r0, 1
 	JMP nextChar
 end_reg:
+	LEAVE
 	RET
 
 printInteger:

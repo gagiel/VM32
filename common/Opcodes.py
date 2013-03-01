@@ -34,6 +34,9 @@ OP_RET = 0x46
 #Group 6: Stack
 OP_PUSH= 0x50
 OP_POP = 0x51
+OP_ENTER = 0x52
+OP_LEAVE = 0x53
+OP_GETARGUMENT = 0x54
 
 #Group 7: Interrupts
 OP_INT = 0x60
