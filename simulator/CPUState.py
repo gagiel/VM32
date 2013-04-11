@@ -33,6 +33,12 @@ class CPUState(object):
 		self.InVM = False
 		self.VmID = 0
 
+		self.Counter = 0
+		self.Compare = 0
+		self.Int = 0
+
+		self.interruptPending = False
+
 		self.privLvl = 0
 
 		self.segments = []
@@ -197,6 +203,12 @@ class CPUState(object):
 			return self.RS
 		elif index == SPECIALREG_SS:
 			return self.SS
+		elif index == SPECIALREG_COUNTER:
+			return self.Counter
+		elif index == SPECIALREG_COMPARE:
+			return self.Compare
+		elif index == SPECIALREG_INT:
+			return self.Int
 		else:
 			raise CPUStateError("Don't know how to handle special register index - this is a bug!")
 		
@@ -224,8 +236,41 @@ class CPUState(object):
 			self.RS = value
 		elif index == SPECIALREG_SS:
 			self.SS = value
+		elif index == SPECIALREG_COUNTER:
+			self.Counter = value
+		elif index == SPECIALREG_COMPARE:
+			self.Compare = value
+		elif index == SPECIALREG_INT:
+			self.Int = value
 		else:
 			raise CPUStateError("Don't know how to handle special register index - this is a bug!")
+
+	def handleHardwareTimerTick(self):
+		if self.isTimerEnabled():
+			if self.Counter == self.Compare:
+				self.deactivateTimer()
+				self.Counter = 0
+				self.interruptPending = True
+			else:
+				self.Counter += 1
+
+	def isTimerEnabled(self):
+		return self.Int & 2 != 0
+
+	def deactivateTimer(self):
+		self.Int &= ~(2)
+
+	def isInterruptEnabled(self):
+		return self.Int & 1 != 0
+
+	def isInterruptPending(self):
+		return self.interruptPending
+
+	def resetInterruptPending(self):
+		self.interruptPending = False
+
+	#def setTimerExpired(self):
+	#	self.Int |= 4
 
 	def _parseNewSegTbl(self):
 		self.segments = []

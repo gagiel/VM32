@@ -1,0 +1,155 @@
+.SEGMENT vectors
+.privLvl 0
+.GLOBAL InterruptVectors
+
+InterruptVectors:
+
+#0x00
+vec_reset:
+	JMP startup
+
+#0x01
+vec_segmentViolation:
+	JMP segViol
+
+#0x02
+vec_invalidOpcode:
+	JMP vec_invalidOpcode
+
+#0x03
+vec_divisionByZero:
+	JMP divByZero
+
+#0x04
+vec_hypervisorTrap:
+	JMP vec_hypervisorTrap
+
+#0x05
+vec_timerInterrupt:
+	JMP tickHandler
+
+
+
+#0x06-0x20
+vec_softwareStart:
+	JMP testInterrupt
+
+#INT 1
+	NOP
+	NOP
+
+#INT 2
+	NOP
+	NOP
+
+#INT 3
+	NOP
+	NOP
+
+#INT 4
+	NOP
+	NOP
+
+#INT 5
+	NOP
+	NOP
+
+#INT 6
+	NOP
+	NOP
+
+#INT 7
+	NOP
+	NOP
+
+#INT 8
+	NOP
+	NOP
+
+#INT 9
+	NOP
+	NOP
+
+#INT 10
+	NOP
+	NOP
+
+#INT 11
+	NOP
+	NOP
+
+#INT 12
+	NOP
+	NOP
+
+#INT 13
+	NOP
+	NOP
+
+#INT 14
+	NOP
+	NOP
+
+#INT 15
+	NOP
+	NOP
+
+#INT 16
+	NOP
+	NOP
+
+#INT 17
+	NOP
+	NOP
+
+#INT 18
+	NOP
+	NOP
+
+#INT 19
+	NOP
+	NOP
+
+#INT 20
+	NOP
+	NOP
+
+#INT 21
+	NOP
+	NOP
+
+#INT 22
+	NOP
+	NOP
+
+#INT 23
+	NOP
+	NOP
+
+#INT 24
+	NOP
+	NOP
+
+#INT 25
+	NOP
+	NOP
+
+hang:
+	HALT
+	JMP hang
+
+divByZero:
+	PRINT 0x41
+	JMP hang
+
+segViol:
+	PRINT 0x42
+	POP r0
+	PRINT r0
+	POP r0
+	PRINT r0
+	JMP hang
+
+testInterrupt:
+	PRINT 0x43
+	RETI

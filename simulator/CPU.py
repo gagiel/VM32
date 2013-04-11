@@ -23,6 +23,12 @@ class CPU(object):
 	def doSimulationStep(self):
 		#todo check if pc can be fetched from the resulting address
 
+		if self.state.isInterruptPending() and self.state.isInterruptEnabled():
+			self.state.resetInterruptPending()
+			self.raiseInterrupt(Opcodes.INTR_TIMER, self.state.IP)
+		else:
+			self.state.handleHardwareTimerTick()
+
 		self.logger.debug("Fetching instruction from %x", self.state.IP)
 
 		try:

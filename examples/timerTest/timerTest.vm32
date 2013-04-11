@@ -1,0 +1,104 @@
+.SEGMENT code
+.privLvl 0
+.GLOBAL startup
+.GLOBAL tickHandler
+
+startup:
+	MOV CR_CS, 0
+	MOV CR_DS, 1
+	MOV CR_ES, 1
+	MOV CR_RS, 2
+	MOV CR_SS, 3
+
+	MOV CR_SEGTBL, segementationTable
+	MOV r30, endOfStack
+
+	PUSH sayHello
+	CALL printString
+	ADD r30, 1
+
+	#Configure timer an enable interrupts
+	MOV CR_COUNTER, 0
+	MOV CR_COMPARE, 10
+	MOV CR_INT, 3 #enable timer and timer interrupts
+
+end:
+	PRINT 0x41
+	JMP end
+
+##########################################
+
+tickHandler:
+	PUSH tickStr
+	CALL printString
+	ADD r30, 1
+
+	#reenable timer
+	MOV r0, CR_INT
+	OR r0, 2
+	MOV CR_INT, r0
+
+	RETI
+
+##########################################
+
+printString:
+	ENTER
+	GETARGUMENT r0, 0
+nextChar:
+	CMP r0(0), 0
+	JZ end_reg
+	PRINT r0(0)
+	ADD r0, 1
+	JMP nextChar
+end_reg:
+	LEAVE
+	RET
+
+codeEnd:
+
+##########################################
+
+.SEGMENT data
+startOfData:
+
+sayHello:
+	.string "Timer test!\n"
+
+tickStr:
+	.string "Tick\n"
+
+
+
+segementationTable:
+#        Start               Limit           Type      		PrivLvl
+#CS
+.word    InterruptVectors,   codeEnd,        0,        		0
+
+#DS
+.word    startOfData,        endOfData,      1,        		0
+
+#DS
+.word    startOfRegisters,   endOfRegisters, 2,        		0
+
+#DS
+.word    startOfStack,       endOfStack,     3,				0
+
+#END
+.word    0xFFFFFFFF,         0xFFFFFFFF,     0xFFFFFFFF,	0xFFFFFFFF
+
+endOfData:
+
+##########################################
+
+.SEGMENT registers
+startOfRegisters:
+.alloc 31
+endOfRegisters:
+
+##########################################
+
+.SEGMENT stack
+startOfStack:
+.alloc 512
+endOfStack:

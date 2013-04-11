@@ -1,4 +1,4 @@
-SUBTARGETS = hvtest printString
+SUBTARGETS = hvtest printString timerTest
 
 DIRS = $(SUBTARGETS:%=%.dir)
 

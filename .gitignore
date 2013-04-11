@@ -1,4 +1,5 @@
 *.bin
+*.map
 *.obj
 *.pyc
 parser.out
