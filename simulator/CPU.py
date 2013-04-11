@@ -72,6 +72,11 @@ class CPU(object):
 					ipadd += 1
 
 				elif operandType1 == Opcodes.PARAM_REGISTER:
+					if registerOperand1 > 30:
+						self.logger.debug("Invalid register access for instruction 0x%x at physical 0x%x", opcode, self.state.IP)
+						self.raiseInterrupt(Opcodes.INTR_INVALID_INSTR, self.state.IP)
+						return True
+
 					operand1 = self.state.getRegister(registerOperand1)
 					writebackFunction = lambda val: self.state.setRegister(registerOperand1, val)
 
@@ -129,6 +134,11 @@ class CPU(object):
 					ipadd += 1
 
 				elif operandType2 == Opcodes.PARAM_REGISTER:
+					if registerOperand1 > 30:
+						self.logger.debug("Invalid register access for instruction 0x%x at physical 0x%x", opcode, self.state.IP)
+						self.raiseInterrupt(Opcodes.INTR_INVALID_INSTR, self.state.IP)
+						return True
+
 					operand2 = self.state.getRegister(registerOperand2)
 
 				elif operandType2 == Opcodes.PARAM_MEMORY_SINGLE_DS:

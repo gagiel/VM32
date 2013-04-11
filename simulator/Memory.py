@@ -2,7 +2,7 @@ import struct
 import logging
 
 #total memory size
-MEMORY_SIZE = 4*1024*1024*1024
+MEMORY_SIZE = 1*1024*1024*1024
 
 class MemoryException(Exception): pass
 class MemoryAddressOutOfBoundsException(MemoryException): pass
