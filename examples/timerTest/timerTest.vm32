@@ -34,6 +34,7 @@ tickHandler:
 	ADD r30, 1
 
 	#reenable timer
+	mov CR_COUNTER, 0
 	MOV r0, CR_INT
 	OR r0, 2
 	MOV CR_INT, r0

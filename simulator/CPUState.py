@@ -249,7 +249,6 @@ class CPUState(object):
 		if self.isTimerEnabled():
 			if self.Counter == self.Compare:
 				self.deactivateTimer()
-				self.Counter = 0
 				self.interruptPending = True
 			else:
 				self.Counter += 1
