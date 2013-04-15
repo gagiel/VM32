@@ -11,9 +11,8 @@ startup:
 	MOV CR_RS, 2
 	MOV CR_SS, 3
 
-	MOV CR_STACKPTR, endOfStack
-
 	MOV CR_SEGTBL, segementationTable
+	MOV r30, endOfStack
 
 	#CALL doNastySegmentViolations
 

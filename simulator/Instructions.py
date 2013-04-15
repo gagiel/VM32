@@ -178,6 +178,13 @@ _INSTR = {
 		'name': 'RET',
 		'paramtypes': []
 	},
+	OP_RETN: {
+		'nargs': 1,
+		'name': 'RETN',
+		'paramtypes': [
+			[PARAM_IMMEDIATE]
+		]
+	},
 
 	OP_PUSH: {
 		'nargs': 1,
@@ -233,6 +240,16 @@ _INSTR = {
 		'paramtypes': [
 			[PARAM_REGISTER, PARAM_IMMEDIATE, PARAM_MEMORY_SINGLE_DS, PARAM_MEMORY_SINGLE_ES, PARAM_MEMORY_DOUBLE_DS, PARAM_MEMORY_DOUBLE_ES],
 		]
+	},
+	OP_STI: {
+		'nargs': 0,
+		'name': 'STI',
+		'paramtypes': []
+	},
+	OP_CLI: {
+		'nargs': 0,
+		'name': 'CLI',
+		'paramtypes': []
 	},
 }
 

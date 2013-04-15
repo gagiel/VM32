@@ -1,0 +1,95 @@
+.SEGMENT vm2code
+.GLOBAL vm2CodeStart
+.GLOBAL vm2CodeEnd
+
+vm2CodeStart:
+
+vec_reset: 				JMP vmStartup
+vec_segmentViolation: 	JMP vmSegviol
+vec_invalidOpcode: 		JMP vmInvalid
+vec_divisionByZero: 	JMP vmDivByZero
+vec_hypervisorTrap: 	JMP vmHvTrap
+vec_timerInterrupt: 	JMP vmTimerInt
+
+JMP hang #INT 0
+JMP hang #INT 1
+JMP hang #INT 2
+JMP hang #INT 3
+JMP hang #INT 4
+JMP hang #INT 5
+JMP hang #INT 6
+JMP hang #INT 7
+JMP hang #INT 8
+JMP hang #INT 9
+JMP hang #INT 10
+JMP hang #INT 11
+JMP hang #INT 12
+JMP hang #INT 13
+JMP hang #INT 14
+JMP hang #INT 15
+JMP hang #INT 16
+JMP hang #INT 17
+JMP hang #INT 18
+JMP hang #INT 19
+JMP hang #INT 20
+JMP hang #INT 21
+JMP hang #INT 22
+JMP hang #INT 23
+JMP hang #INT 24
+JMP hang #INT 25
+
+vmSegviol:
+vmInvalid:
+vmDivByZero:
+vmHvTrap:
+vmTimerInt:
+
+hang:
+	HALT
+	JMP hang
+
+vmStartup:
+	MOV r30, vm2StackEnd
+
+	MOV r0, vmSayHello
+	CALL printString
+
+again:
+	PRINT 0x42
+	JMP again
+	
+	HALT
+
+#r0 takes pointer to string to print
+printString:
+	CMP r0(0), 0
+	JZ end_reg
+	PRINT r0(0)
+	ADD r0, 1
+	JMP printString
+end_reg:
+	RET
+
+vm2CodeEnd:
+
+
+.SEGMENT vm2data
+.GLOBAL vm2DataStart
+.GLOBAL vm2DataEnd
+vm2DataStart:
+vmSayHello:		.string "VM2 starting\n"
+vm2DataEnd:
+
+.SEGMENT vm2Regs
+.GLOBAL vm2RegsStart
+.GLOBAL vm2RegsEnd
+vm2RegsStart:
+.alloc 31
+vm2RegsEnd:
+
+.SEGMENT vm2Stack
+.GLOBAL vm2StackStart
+.GLOBAL vm2StackEnd
+vm2StackStart:
+.alloc 512
+vm2StackEnd:

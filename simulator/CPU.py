@@ -21,11 +21,10 @@ class CPU(object):
 		self.state.reset(self.memory)
 
 	def doSimulationStep(self):
-		#todo check if pc can be fetched from the resulting address
-
+		#check timer for expiration
 		if self.state.isInterruptPending() and self.state.isInterruptEnabled():
 			self.state.resetInterruptPending()
-			self.raiseInterrupt(Opcodes.INTR_TIMER, self.state.IP)
+			self.raiseTimerInterrupt()
 		else:
 			self.state.handleHardwareTimerTick()
 
@@ -132,7 +131,7 @@ class CPU(object):
 				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
 				return True
 		
-		#decode second operand type, fetch it and prepare a writeback closure
+		#decode second operand type and fetch it
 		if argumentCount > 1:
 			try:
 				if operandType2 == Opcodes.PARAM_IMMEDIATE:
@@ -263,7 +262,8 @@ class CPU(object):
 			if not self.state.InVM:
 				return False
 			else:
-				self.raiseHypervisorTrap(Opcodes.HVTRAP_HALT)
+				self.state.IP += ipadd
+				self.raiseVMExitEvent(Opcodes.HVTRAP_HALT, [operand1 & 0xFF])
 				return True
 
 		#PRINT
@@ -273,8 +273,8 @@ class CPU(object):
 				sys.stdout.write(chr(operand1 & 0xFF))
 				sys.stdout.flush()
 			else:
-				#print "hw access, raising hvtrap"
-				self.raiseHypervisorTrap(Opcodes.HVTRAP_HARDWARE_ACCESS, [operand1 & 0xFF])
+				self.state.IP += ipadd
+				self.raiseVMExitEvent(Opcodes.HVTRAP_HARDWARE_ACCESS, [operand1 & 0xFF])
 				return True
 
 		#CMP
@@ -346,6 +346,17 @@ class CPU(object):
 				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
 
 			return True
+
+		#RETN
+		elif opcode == Opcodes.OP_RETN:
+			#get new IP from stack
+			try:
+				self.state.IP = self.popFromStack()
+				for i in range(operand1): self.state.incrementStackPointer()
+			except CPUSegmentViolationException, e:
+				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
+
+			return True
 		
 		#PUSH
 		elif opcode == Opcodes.OP_PUSH:
@@ -413,9 +424,18 @@ class CPU(object):
 				self.state.saveHypervisorContext()
 				self.state.setVmContext(operand1)
 			else:
-				self.raiseHypervisorTrap(Opcodes.HVTRAP_VMRESUME, [operand1])
+				print "vmresume in vm"
+				#self.raiseHypervisorTrap(Opcodes.HVTRAP_VMRESUME, [operand1])
 
 			return True
+
+		#CLI
+		elif opcode == Opcodes.OP_CLI:
+			self.state.disableInterrupts()
+
+		#STI
+		elif opcode == Opcodes.OP_STI:
+			self.state.enableInterrupts()
 
 		#Unknown - internal error
 		else:
@@ -449,17 +469,18 @@ class CPU(object):
 		self.state.incrementStackPointer()
 		return stackValue
 
-	#def raiseSegmentViolation(self, segmentIndex):
-	#	self.raiseInterrupt(INTR_SEG_VIOL, self.state.IP, [segmentIndex])
-
 	def raiseInterrupt(self, interruptNumber, returnIp, additionalStackValues = []):
 		if interruptNumber > 32:
 			raise SimulatorError("Interrupt number is out of bounds")
 
 		if not self.state.InVM:
-			map(lambda x: self.pushToStack(x), additionalStackValues)
-			self.pushToStack(returnIp)
-			self.state.IP = self.state.getResultingInterruptAddress() + interruptNumber * 2
+			try:
+				map(lambda x: self.pushToStack(x), additionalStackValues)
+				self.pushToStack(returnIp)
+				self.state.IP = self.state.getResultingInterruptAddress() + interruptNumber * 2
+			except CPUSegmentViolationException, e:
+				print "ERROR! CPU can't push values to the stack for interrupt/exception handling, the CPU is now in an undefined state and likely to crash"
+				raise e
 		else:
 			softwareInterruptNumber = 0
 			if interruptNumber >= Opcodes.INTR_SOFTWARE:
@@ -468,27 +489,48 @@ class CPU(object):
 				interruptNumber = INTR_SOFTWARE
 
 			hvTrapNumber = Opcodes.INTR_TO_HVTRAP[interruptNumber]
-			self.raiseHypervisorTrap(hvTrapNumber, additionalStackValues)
+			self.raiseVMExitEvent(hvTrapNumber, additionalStackValues)
 
-	def raiseHypervisorTrap(self, trapNumber, additionalStackValues = []):
+	def raiseTimerInterrupt(self):
+		if not self.state.InVM:
+			self.pushToStack(self.state.IP)
+			self.state.IP = self.state.getResultingInterruptAddress() + Opcodes.INTR_TIMER * 2
+		else:
+			currentvm = self.state.VmID
+			self.state.saveVmContext(currentvm)	#save current vm state
+			self.state.setVmContext(0)	#switch to hypervisor state
+			self.state.InVM = False		#we are no longer inside of a VM
+
+			#prepare information for vmexit handler
+			self.pushToStack(HVTRAP_TIMER)
+			self.pushToStack(currentvm)
+
+			#jump to timer interrupt handler in hv context with return address pointing to next instruction after VMRESUME
+			self.pushToStack(self.state.IP)
+			self.state.IP = self.state.getResultingInterruptAddress() + Opcodes.INTR_TIMER * 2
+
+	def raiseVMExitEvent(self, trapNumber, additionalStackValues=[]):
 		currentvm = self.state.VmID
 		self.state.saveVmContext(currentvm)	#save current vm state
 		self.state.setVmContext(0)	#switch to hypervisor state
 		self.state.InVM = False		#we are no longer inside of a VM
 
-		map(lambda x: self.pushToStack(x), additionalStackValues)
-		self.pushToStack(trapNumber)
-		self.pushToStack(currentvm)
-		self.state.IP = self.state.getResultingInterruptAddress() + Opcodes.INTR_HV_TRAP * 2
+		try:
+			map(lambda x: self.pushToStack(x), additionalStackValues)
+			self.pushToStack(trapNumber)
+			self.pushToStack(currentvm)
+		except CPUSegmentViolationException, e:
+			print "ERROR! CPU can't push values to the stack for VMEXIT event, the CPU is now in an undefined state and likely to crash"
+			raise e
 
 	def setSpecialRegister(self, specialRegister, value):
 		if not self.state.InVM:
 			self.state.setSpecialRegister(specialRegister, value)
 		else:
-			self.raiseHypervisorTrap(Opcodes.HVTRAP_SPECIAL_REG_WRITE, [value, specialRegister])
+			self.raiseVMExitEvent(Opcodes.HVTRAP_SPECIAL_REG_WRITE, [value, specialRegister])
 
 	def getSpecialRegister(self, specialRegister):
 		if not self.state.InVM:
 			return self.state.getSpecialRegister(specialRegister)
 		else:
-			self.raiseHypervisorTrap(Opcodes.HVTRAP_SPECIAL_REG_READ, [specialRegister])
+			self.raiseVMExitEvent(Opcodes.HVTRAP_SPECIAL_REG_READ, [specialRegister])

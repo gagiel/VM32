@@ -195,6 +195,13 @@ _INSTR = {
 		'op': OP_RET,
 		'paramtypes': []
 	},
+	'retn': {
+		'nargs': 1,
+		'op': OP_RETN,
+		'paramtypes': [
+			[Number]
+		]
+	},
 
 	'push': {
 		'nargs': 1,
@@ -249,6 +256,17 @@ _INSTR = {
 		'paramtypes': [
 			[Register, Id, Number, MemRef, DoubleMemRef],
 		]
+	},
+
+	'cli': {
+		'nargs': 0,
+		'op': OP_CLI,
+		'paramtypes': []
+	},
+	'sti': {
+		'nargs': 0,
+		'op': OP_STI,
+		'paramtypes': []
 	},
 }
 

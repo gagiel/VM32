@@ -249,6 +249,7 @@ class CPUState(object):
 		if self.isTimerEnabled():
 			if self.Counter == self.Compare:
 				self.deactivateTimer()
+				self.Counter = 0
 				self.interruptPending = True
 			else:
 				self.Counter += 1
@@ -267,6 +268,12 @@ class CPUState(object):
 
 	def resetInterruptPending(self):
 		self.interruptPending = False
+
+	def enableInterrupts(self):
+		self.Int |= 1
+
+	def disableInterrupts(self):
+		self.Int &= ~1
 
 	#def setTimerExpired(self):
 	#	self.Int |= 4

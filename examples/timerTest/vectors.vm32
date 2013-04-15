@@ -21,16 +21,12 @@ vec_divisionByZero:
 	JMP divByZero
 
 #0x04
-vec_hypervisorTrap:
-	JMP vec_hypervisorTrap
-
-#0x05
 vec_timerInterrupt:
 	JMP tickHandler
 
 
 
-#0x06-0x20
+#0x05-0x20
 vec_softwareStart:
 	JMP testInterrupt
 
@@ -131,6 +127,10 @@ vec_softwareStart:
 	NOP
 
 #INT 25
+	NOP
+	NOP
+
+#INT 26
 	NOP
 	NOP
 
