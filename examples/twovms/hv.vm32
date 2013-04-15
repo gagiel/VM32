@@ -6,6 +6,8 @@
 .GLOBAL hvDivisionByZero
 .GLOBAL hvTimerInterrupt
 
+.DEFINE TIMERCOMPARE, 30
+
 startup:
 	MOV CR_CS, 0
 	MOV CR_DS, 1
@@ -16,18 +18,16 @@ startup:
 	MOV CR_SEGTBL, segementationTable
 	MOV r30, endOfStack				#set the stack pointer *after* activating a register segment
 
-	#PUSH bootStr
-	#CALL printString
-	#ADD r30, 1						#remove argument from stack
+	PUSH bootStr
+	CALL printString
+	ADD r30, 1						#remove argument from stack
 
 	#Configure timer and enable interrupts
 	MOV CR_COUNTER, 0
-	MOV CR_COMPARE, 30
+	MOV CR_COMPARE, TIMERCOMPARE
 	MOV CR_INT, 2 #enable timer
 
 	MOV r0, vmTable
-	#ADD r0, 8
-	#MOV r0(5), vm1CodeStart			#Set Entry point for VM
 	MOV CR_VMTBL, vmTable			#After every modification, reload must be triggered
 	
 vmEntry:
@@ -64,16 +64,20 @@ hvDivisionByZero:
 	HALT
 
 hvTimerInterrupt:
-	#Configure timer and enable interrupts
-	MOV CR_COUNTER, 0
-	MOV CR_COMPARE, 30
-	MOV CR_INT, 2 #enable timer
-
+	#do round robin scheduling between VMs
+	#after RETI, a VMEXIT will happen where we do the actual scheduling based on the new value of currentVM
 	ADD (currentVM), 1
 	CMP (currentVM), 3
 	JNZ out
 	MOV (currentVM), 1
 out:
+
+	#Reconfigure timer and enable interrupts
+	#After that the timer starts running again
+	MOV CR_COUNTER, 0
+	MOV CR_COMPARE, TIMERCOMPARE
+	MOV CR_INT, 2 #enable timer
+
 	RETI
 
 ##########################################

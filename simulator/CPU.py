@@ -502,7 +502,7 @@ class CPU(object):
 			self.state.InVM = False		#we are no longer inside of a VM
 
 			#prepare information for vmexit handler
-			self.pushToStack(HVTRAP_TIMER)
+			self.pushToStack(Opcodes.HVTRAP_TIMER)
 			self.pushToStack(currentvm)
 
 			#jump to timer interrupt handler in hv context with return address pointing to next instruction after VMRESUME
