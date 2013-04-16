@@ -112,15 +112,15 @@ class CPUState(object):
 		else:
 			#check if segment descriptor exists
 			if len(self.segments) < self.ES:
-				raise CPUSegmentViolationException(SEGMENT_EXTRA, offset)
+				raise CPUSegmentViolationException(SEGMENT_DATA, offset)
 
 			#check type of segment
-			if self.segments[self.ES].type != SEGMENT_EXTRA:
-				raise CPUSegmentViolationException(SEGMENT_EXTRA, offset)
+			if self.segments[self.ES].type != SEGMENT_DATA:
+				raise CPUSegmentViolationException(SEGMENT_DATA, offset)
 
 			#check boundaries of segment
 			if offset < self.segments[self.ES].start or offset > self.segments[self.ES].limit:
-				raise CPUSegmentViolationException(SEGMENT_EXTRA, offset)
+				raise CPUSegmentViolationException(SEGMENT_DATA, offset)
 
 			return offset
 
