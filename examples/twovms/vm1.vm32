@@ -8,7 +8,6 @@ vec_reset: 				JMP vmStartup
 vec_segmentViolation: 	JMP vmSegviol
 vec_invalidOpcode: 		JMP vmInvalid
 vec_divisionByZero: 	JMP vmDivByZero
-vec_hypervisorTrap: 	JMP vmHvTrap
 vec_timerInterrupt: 	JMP vmTimerInt
 
 JMP hang #INT 0
@@ -37,6 +36,7 @@ JMP hang #INT 22
 JMP hang #INT 23
 JMP hang #INT 24
 JMP hang #INT 25
+JMP hang #INT 26
 
 vmSegviol:
 vmInvalid:
