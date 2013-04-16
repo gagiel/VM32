@@ -45,35 +45,42 @@ class CPUState(object):
 		self.vms = []
 
 	def getResultingInstructionAddress(self):
-		#TODO: check if segment exists, check if limit is violated, check if type matches and check if privLvl is not violated
+		#TODO: check if privLvl is not violated
 
 		if len(self.segments) == 0:
 			return self.IP
 		else:
+			#check if segment descriptor exists
+			if len(self.segments) < self.CS:
+				raise CPUSegmentViolationException(SEGMENT_CODE, self.IP)
+
+			#check type of segment
+			if self.segments[self.CS].type != SEGMENT_CODE:
+				raise CPUSegmentViolationException(SEGMENT_CODE, self.IP)
+
+			#check boundaries of segment
 			if self.IP < self.segments[self.CS].start or self.IP > self.segments[self.CS].limit:
 				raise CPUSegmentViolationException(SEGMENT_CODE, self.IP)
 
 			return self.IP
 
-			#if self.segments[self.CS].start + self.IP > self.segments[self.CS].limit or self.IP < 0:
-			#	raise CPUSegmentViolationException(SEGMENT_CODE, self.IP)
-
-
-			#return self.segments[self.CS].start + self.IP
-
 	def getResultingCodeAddress(self, offset):
 		if len(self.segments) == 0:
 			return offset
 		else:
+			#check if segment descriptor exists
+			if len(self.segments) < self.CS:
+				raise CPUSegmentViolationException(SEGMENT_CODE, offset)
+
+			#check type of segment
+			if self.segments[self.CS].type != SEGMENT_CODE:
+				raise CPUSegmentViolationException(SEGMENT_CODE, offset)
+
+			#check boundaries of segment
 			if offset < self.segments[self.CS].start or offset > self.segments[self.CS].limit:
 				raise CPUSegmentViolationException(SEGMENT_CODE, offset)
 
 			return offset
-
-			#if self.segments[self.CS].start + offset > self.segments[self.CS].limit or offset < 0:
-			#	raise CPUSegmentViolationException(SEGMENT_CODE, offset)
-
-			#return self.segments[self.CS].start + offset
 
 	def getResultingInterruptAddress(self):
 		if len(self.segments) == 0:
@@ -85,12 +92,15 @@ class CPUState(object):
 		if len(self.segments) == 0:
 			return offset
 		else:
-			#if self.segments[self.DS].start + offset > self.segments[self.DS].limit or offset < 0:
-			#	print "start: %x - offset: %x - limit: %x" % (self.segments[self.DS].start, offset, self.segments[self.DS].limit)
-			#	raise CPUSegmentViolationException(SEGMENT_DATA, offset)
+			#check if segment descriptor exists
+			if len(self.segments) < self.DS:
+				raise CPUSegmentViolationException(SEGMENT_DATA, offset)
 
-			#return self.segments[self.DS].start + offset
+			#check type of segment
+			if self.segments[self.DS].type != SEGMENT_DATA:
+				raise CPUSegmentViolationException(SEGMENT_DATA, offset)
 
+			#check boundaries of segment
 			if offset < self.segments[self.DS].start or offset > self.segments[self.DS].limit:
 				raise CPUSegmentViolationException(SEGMENT_DATA, offset)
 
@@ -100,11 +110,15 @@ class CPUState(object):
 		if len(self.segments) == 0:
 			return offset
 		else:
-			#if self.segments[self.ES].start + offset > self.segments[self.ES].limit or offset < 0:
-			#	raise CPUSegmentViolationException(SEGMENT_EXTRA, offset)
+			#check if segment descriptor exists
+			if len(self.segments) < self.ES:
+				raise CPUSegmentViolationException(SEGMENT_EXTRA, offset)
 
-			#return self.segments[self.ES].start + offset
+			#check type of segment
+			if self.segments[self.ES].type != SEGMENT_EXTRA:
+				raise CPUSegmentViolationException(SEGMENT_EXTRA, offset)
 
+			#check boundaries of segment
 			if offset < self.segments[self.ES].start or offset > self.segments[self.ES].limit:
 				raise CPUSegmentViolationException(SEGMENT_EXTRA, offset)
 
@@ -114,12 +128,17 @@ class CPUState(object):
 		if len(self.segments) == 0:
 			return self.getRegister(30)
 		else:
-			#if self.segments[self.SS].start + self.SS > self.segments[self.SS].limit or self.SS < 0:
-			#	raise CPUSegmentViolationException(SEGMENT_STACK, self.SS)
-
-			#return self.segments[self.SS].start + self.SP
 			sp = self.getRegister(30)
 			
+			#check if segment descriptor exists
+			if len(self.segments) < self.SS:
+				raise CPUSegmentViolationException(SEGMENT_STACK, sp)
+
+			#check type of segment
+			if self.segments[self.SS].type != SEGMENT_STACK:
+				raise CPUSegmentViolationException(SEGMENT_STACK, sp)
+
+			#check boundaries of segment
 			if sp < self.segments[self.SS].start or sp > self.segments[self.SS].limit:
 				raise CPUSegmentViolationException(SEGMENT_STACK, sp)
 
@@ -132,6 +151,15 @@ class CPUState(object):
 		if len(self.segments) == 0:
 			return self.memory.readWord(0x2000 + reg)
 		else:
+			#check if segment descriptor exists
+			if len(self.segments) < self.RS:
+				raise CPUSegmentViolationException(SEGMENT_REGISTER, reg)
+
+			#check type of segment
+			if self.segments[self.RS].type != SEGMENT_REGISTER:
+				raise CPUSegmentViolationException(SEGMENT_REGISTER, reg)
+
+			#read register from memory
 			return self.memory.readWord(self.segments[self.RS].start + reg)
 
 	def setRegister(self, reg, value):
@@ -141,6 +169,15 @@ class CPUState(object):
 		if len(self.segments) == 0:
 			self.memory.writeWord(0x2000 + reg, value)
 		else:
+			#check if segment descriptor exists
+			if len(self.segments) < self.RS:
+				raise CPUSegmentViolationException(SEGMENT_REGISTER, reg)
+
+			#check type of segment
+			if self.segments[self.RS].type != SEGMENT_REGISTER:
+				raise CPUSegmentViolationException(SEGMENT_REGISTER, reg)
+
+			#write register to memory
 			self.memory.writeWord(self.segments[self.RS].start + reg, value)
 
 	def getFlags(self):
@@ -187,8 +224,6 @@ class CPUState(object):
 		if index < 0 or index > len(SPECIALREGS):
 			raise CPUStateError("Special Register index out of bounds")
 
-		#FIXME: Trap, wenn in VM
-
 		if index == SPECIALREG_SEGTBL:
 			return self.SegTbl
 		elif index == SPECIALREG_VMTBL:
@@ -217,7 +252,6 @@ class CPUState(object):
 		if index < 0 or index > len(SPECIALREGS):
 			raise CPUStateError("Special Register index out of bounds")
 
-		#FIXME: Trap, wenn in VM
 		#FIXME: typen von segmenten checken
 
 		if index == SPECIALREG_SEGTBL:

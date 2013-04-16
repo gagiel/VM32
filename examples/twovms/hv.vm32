@@ -6,7 +6,7 @@
 .GLOBAL hvDivisionByZero
 .GLOBAL hvTimerInterrupt
 
-.DEFINE TIMERCOMPARE, 30
+.DEFINE TIMERCOMPARE, 50
 
 startup:
 	MOV CR_CS, 0
