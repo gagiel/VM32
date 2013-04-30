@@ -424,8 +424,7 @@ class CPU(object):
 				self.state.saveHypervisorContext()
 				self.state.setVmContext(operand1)
 			else:
-				print "vmresume in vm"
-				#self.raiseHypervisorTrap(Opcodes.HVTRAP_VMRESUME, [operand1])
+				self.raiseHypervisorTrap(Opcodes.HVTRAP_VMRESUME, [operand1])
 
 			return True
 

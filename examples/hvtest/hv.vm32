@@ -80,12 +80,6 @@ handleDivisionByZero:
 	ADD r30, 1
 	HALT
 
-handleHvTrap:
-	PUSH vmtrapStr
-	CALL printString
-	ADD r30, 1
-	HALT
-
 hvHandleSoftwareInt:
 	PUSH softwareIntStr
 	CALL printString
@@ -194,8 +188,6 @@ invInstrStr:
 	.string "Invalid Instruction\n"
 divByZeroStr:
 	.string "Divion by zero\n"
-vmtrapStr:
-	.string "HV Trap in VM\n"
 softwareIntStr:
 	.string "Software Interrupt\n"
 privViolationStr:
@@ -219,7 +211,6 @@ hvTrapJumpTable:
 	.word hvHandleSegmentViolation
 	.word hvHandleInvalidInstruction
 	.word handleDivisionByZero
-	.word handleHvTrap
 	.word hvHandleSoftwareInt
 	.word hvHandlePrivilegeViolation
 	.word hvHandleSpecialRegisterRead
