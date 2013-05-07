@@ -1,6 +1,6 @@
 from .CPUState import CPUState
-from .Memory import Memory
-from .Exceptions import SimulatorError, CPUSegmentViolationException
+from .Memory import Memory, MemoryAddressOutOfBoundsException
+from .Exceptions import SimulatorError, CPUSegmentViolationException, CPUStateSegTblFaultyError
 
 from common import Opcodes
 
@@ -402,6 +402,9 @@ class CPU(object):
 		#INT
 		elif opcode == Opcodes.OP_INT:
 			try:
+				if operand1 > 26:	#we only have interrupts between 0 and 26, so raise an exception if we are out of bounds
+					self.raiseInterrupt(Opcodes.INTR_INVALID_INSTR, self.state.IP)
+					return True
 				self.raiseInterrupt((operand1 + Opcodes.INTR_SOFTWARE), self.state.IP + ipadd)
 			except CPUSegmentViolationException, e:
 				self.raiseInterrupt(Opcodes.INTR_SEG_VIOL, self.state.IP, [e.segment, e.offset])
@@ -452,7 +455,11 @@ class CPU(object):
 				self.logger.error("Internal simulator error: Instruction wants to perform writeback, but callback is None")
 				return False
 
-			writebackFunction(writebackValue)
+			try:
+				writebackFunction(writebackValue)
+			except CPUStateSegTblFaultyError:	#if we try to load a malformed segmentation table, this exception is thrown
+				self.raiseInterrupt(Opcodes.INTR_INVALID_INSTR, self.state.IP)
+				return True
 
 		#advance instruction pointer
 		self.state.IP += ipadd
@@ -477,6 +484,9 @@ class CPU(object):
 				map(lambda x: self.pushToStack(x), additionalStackValues)
 				self.pushToStack(returnIp)
 				self.state.IP = self.state.getResultingInterruptAddress() + interruptNumber * 2
+			except MemoryAddressOutOfBoundsException, e:
+				print "ERROR! CPU can't push values to the stack for interrupt/exception handling, the CPU is now in an undefined state and likely to crash"
+				raise e
 			except CPUSegmentViolationException, e:
 				print "ERROR! CPU can't push values to the stack for interrupt/exception handling, the CPU is now in an undefined state and likely to crash"
 				raise e

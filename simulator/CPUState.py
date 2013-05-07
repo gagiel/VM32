@@ -313,6 +313,7 @@ class CPUState(object):
 	#	self.Int |= 4
 
 	def _parseNewSegTbl(self):
+		oldTable = self.segments
 		self.segments = []
 
 		address = self.SegTbl
@@ -330,9 +331,11 @@ class CPUState(object):
 				break
 
 			if not type in SEGMENT_TYPES:
+				self.segments = oldTable #revert to old table in case of error
 				raise CPUStateSegTblFaultyError("Unknown segment type encountered")
 
 			if type == SEGMENT_REGISTER and (limit - start) != 31:
+				self.segments = oldTable #revert to old table in case of error
 				raise CPUStateSegTblFaultyError("Register segments need to have a size of 31")
 
 			self.segments.append(SegmentEntry(start, limit, type, privLvl))
