@@ -58,12 +58,12 @@ class Lexer(object):
 		return t
 
 	def t_HEX(self, t):
-		r'\-?0[xX][0-9a-fA-F]+'
+		r'0[xX][0-9a-fA-F]+'
 		t.value = int(t.value, 16)
 		return t
 
 	def t_DEC(self, t):
-		r'\-?\d+'
+		r'\d+'
 		t.value = int(t.value, 10)
 		return t
 
