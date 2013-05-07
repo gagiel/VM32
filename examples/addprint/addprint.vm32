@@ -1,0 +1,129 @@
+.SEGMENT vectors
+
+.DEFINE NUMBER1, 10
+.DEFINE NUMBER2, 20
+
+startup:
+	#set stackpointer
+	MOV r30, endOfStack
+
+	#say hello
+	PUSH strGreeting
+	CALL printString
+
+	#print first number
+	PUSH NUMBER1
+	PUSH strNum1
+	CALL printNumberWithText
+
+	#print second number
+	PUSH NUMBER2
+	PUSH strNum2
+	CALL printNumberWithText
+
+	#add the numbers
+	MOV r0, NUMBER1
+	MOV r1, NUMBER2
+	ADD r0, r1
+
+	PUSH r0
+	PUSH strResult
+	call printNumberWithText
+
+end:
+	HALT
+	JMP end
+
+##########################################
+
+#first argument: string
+#second argument: number
+printNumberWithText:
+	ENTER
+
+	#print text
+	GETARGUMENT r0, 0
+	PUSH r0
+	CALL printString
+
+	#print number
+	GETARGUMENT r0, 1
+	PUSH r0
+	CALL printInteger
+
+	#print linebreak
+	PUSH strLineBreak
+	CALL printString
+
+	LEAVE
+	RETN 2
+
+##########################################
+
+printString:
+	ENTER
+	GETARGUMENT r0, 0
+nextChar:
+	CMP r0(0), 0
+	JZ end_reg
+	PRINT r0(0)
+	ADD r0, 1
+	JMP nextChar
+end_reg:
+	LEAVE
+	RETN 1
+
+##########################################
+
+printInteger:
+	ENTER
+	GETARGUMENT r0, 0
+
+	MOV r1, 28
+	MOV r2, 0xF0000000
+nextNibble:
+	MOV r3, numDigits
+	MOV r4, r0
+
+	AND r4, r2	#mask nibble
+	SHR r4, r1	#shift nibble right
+
+	ADD r3, r4	#get and print char
+	PRINT r3(0)
+
+	SHR r2, 4	#move mask to next nibble
+	SUB r1, 4	#adjust position
+
+	CMP r1, 28	#End?
+	JGE done
+	JMP nextNibble
+done:
+	LEAVE
+	RETN 1
+
+##########################################
+
+.SEGMENT data
+
+strGreeting:
+	.string "Adding two numbers\n"
+
+strNum1:
+	.string "Number 1: 0x"
+strNum2:
+	.string "Number 2: 0x"
+strResult:
+	.string "Result: 0x"
+
+strLineBreak:
+	.string "\n"
+
+numDigits:
+	.string "0123456789ABCDEF"
+
+##########################################
+
+.SEGMENT stack
+startOfStack:
+.alloc 512
+endOfStack:

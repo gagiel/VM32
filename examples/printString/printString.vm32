@@ -2,8 +2,6 @@
 .privLvl 0
 .GLOBAL startup
 
-.define stuff, 0x10000
-
 startup:
 	MOV CR_CS, 0
 	MOV CR_DS, 1
