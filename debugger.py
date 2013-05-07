@@ -240,10 +240,16 @@ def getRegisterStringRepresentation(state):
 
 	string += "\n"
 
+	string += "Counter: %s\n" % state.Counter
+	string += "Compare: 0x%08x\n" % state.Compare
+	string += "INT: 0x%08x - Timer Interrupt-Enable: %s, Global Interrupt-Enable: %s\n" % (state.Int, state.Int & 2 == 2, state.Int & 1 == 1)
+
+	string += "\n"
+
 	string += "privLvl: 0x%s\n" % state.privLvl
 
 	for i in range(31):
-		string += "r%02d: %x\n" % (i, state.getRegister(i))
+		string += "r%02d: %08x\n" % (i, state.getRegister(i))
 
 	return string
 
