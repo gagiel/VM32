@@ -423,6 +423,11 @@ class CPU(object):
 		#VMRESUME
 		elif opcode == Opcodes.OP_VMRESUME:
 			if not self.state.InVM:
+				#check if vm context for switch actually exists
+				if operand1 >= len(self.state.vms):
+					self.raiseInterrupt(Opcodes.INTR_INVALID_INSTR, self.state.IP)
+					return True
+
 				self.state.IP += ipadd
 				self.state.saveHypervisorContext()
 				self.state.setVmContext(operand1)
